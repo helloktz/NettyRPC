@@ -1,82 +1,59 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.newlandframework.rpc.serialize.hessian;
+
+import static com.newlandframework.rpc.core.RpcSystemConfig.SERIALIZE_POOL_MAX_TOTAL;
+import static com.newlandframework.rpc.core.RpcSystemConfig.SERIALIZE_POOL_MAX_WAIT_MILLIS;
+import static com.newlandframework.rpc.core.RpcSystemConfig.SERIALIZE_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS;
+import static com.newlandframework.rpc.core.RpcSystemConfig.SERIALIZE_POOL_MIN_IDLE;
 
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
-import static com.newlandframework.rpc.core.RpcSystemConfig.SERIALIZE_POOL_MAX_TOTAL;
-import static com.newlandframework.rpc.core.RpcSystemConfig.SERIALIZE_POOL_MIN_IDLE;
-import static com.newlandframework.rpc.core.RpcSystemConfig.SERIALIZE_POOL_MAX_WAIT_MILLIS;
-import static com.newlandframework.rpc.core.RpcSystemConfig.SERIALIZE_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
-/**
- * @author tangjie<https://github.com/tang-jie>
- * @filename:HessianSerializePool.java
- * @description:HessianSerializePool功能模块
- * @blogs http://www.cnblogs.com/jietang/
- * @since 2016/10/7
- */
+@Log4j2
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class HessianSerializePool {
+	@Getter
+	private GenericObjectPool<HessianSerialize> hessianPool;
+	private static volatile HessianSerializePool poolFactory = null;
 
-    private GenericObjectPool<HessianSerialize> hessianPool;
-    private static volatile HessianSerializePool poolFactory = null;
+	public static HessianSerializePool getHessianPoolInstance() {
+		if (poolFactory == null) {
+			synchronized (HessianSerializePool.class) {
+				if (poolFactory == null) {
+					poolFactory = new HessianSerializePool(SERIALIZE_POOL_MAX_TOTAL, SERIALIZE_POOL_MIN_IDLE, SERIALIZE_POOL_MAX_WAIT_MILLIS, SERIALIZE_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS);
+				}
+			}
+		}
+		return poolFactory;
+	}
 
-    private HessianSerializePool() {
-        hessianPool = new GenericObjectPool<HessianSerialize>(new HessianSerializeFactory());
-    }
+	public HessianSerializePool(final int maxTotal, final int minIdle, final long maxWaitMillis, final long minEvictableIdleTimeMillis) {
+		hessianPool = new GenericObjectPool<HessianSerialize>(new HessianSerializeFactory());
 
-    public static HessianSerializePool getHessianPoolInstance() {
-        if (poolFactory == null) {
-            synchronized (HessianSerializePool.class) {
-                if (poolFactory == null) {
-                    poolFactory = new HessianSerializePool(SERIALIZE_POOL_MAX_TOTAL, SERIALIZE_POOL_MIN_IDLE, SERIALIZE_POOL_MAX_WAIT_MILLIS, SERIALIZE_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS);
-                }
-            }
-        }
-        return poolFactory;
-    }
+		GenericObjectPoolConfig config = new GenericObjectPoolConfig();
 
-    public HessianSerializePool(final int maxTotal, final int minIdle, final long maxWaitMillis, final long minEvictableIdleTimeMillis) {
-        hessianPool = new GenericObjectPool<HessianSerialize>(new HessianSerializeFactory());
+		config.setMaxTotal(maxTotal);
+		config.setMinIdle(minIdle);
+		config.setMaxWaitMillis(maxWaitMillis);
+		config.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
 
-        GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+		hessianPool.setConfig(config);
+	}
 
-        config.setMaxTotal(maxTotal);
-        config.setMinIdle(minIdle);
-        config.setMaxWaitMillis(maxWaitMillis);
-        config.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
+	public HessianSerialize borrow() {
+		try {
+			return getHessianPool().borrowObject();
+		} catch (Exception ex) {
+			log.error(ex);
+			return null;
+		}
+	}
 
-        hessianPool.setConfig(config);
-    }
-
-    public HessianSerialize borrow() {
-        try {
-            return getHessianPool().borrowObject();
-        } catch (final Exception ex) {
-            ex.printStackTrace();
-            return null;
-        }
-    }
-
-    public void restore(final HessianSerialize object) {
-        getHessianPool().returnObject(object);
-    }
-
-    public GenericObjectPool<HessianSerialize> getHessianPool() {
-        return hessianPool;
-    }
+	public void restore(final HessianSerialize object) {
+		getHessianPool().returnObject(object);
+	}
 }

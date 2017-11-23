@@ -1,91 +1,67 @@
-/**
- * Copyright (C) 2016 Newland Group Holding Limited
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.newlandframework.rpc.netty;
 
-import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-
 import java.net.SocketAddress;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.newlandframework.rpc.core.MessageCallBack;
 import com.newlandframework.rpc.model.MessageRequest;
 import com.newlandframework.rpc.model.MessageResponse;
 
-/**
- * @author tangjie<https://github.com/tang-jie>
- * @filename:MessageSendHandler.java
- * @description:MessageSendHandler功能模块
- * @blogs http://www.cnblogs.com/jietang/
- * @since 2016/10/7
- */
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 public class MessageSendHandler extends ChannelInboundHandlerAdapter {
+	private Map<String, MessageCallBack> mapCallBack = new ConcurrentHashMap<String, MessageCallBack>();
+	
+	@Getter
+	private volatile Channel channel;
+	@Getter
+	private SocketAddress remoteAddr;
 
-    private ConcurrentHashMap<String, MessageCallBack> mapCallBack = new ConcurrentHashMap<String, MessageCallBack>();
-    private volatile Channel channel;
-    private SocketAddress remoteAddr;
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		super.channelActive(ctx);
+		this.remoteAddr = this.channel.remoteAddress();
+	}
 
-    public Channel getChannel() {
-        return channel;
-    }
+	@Override
+	public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+		super.channelRegistered(ctx);
+		this.channel = ctx.channel();
+	}
 
-    public SocketAddress getRemoteAddr() {
-        return remoteAddr;
-    }
+	@Override
+	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+		MessageResponse response = (MessageResponse) msg;
+		String messageId = response.getMessageId();
+		MessageCallBack callBack = mapCallBack.get(messageId);
+		if (callBack != null) {
+			mapCallBack.remove(messageId);
+			callBack.over(response);
+		}
+	}
 
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
-        this.remoteAddr = this.channel.remoteAddress();
-    }
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		log.error(cause);
+		ctx.close();
+	}
 
-    @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelRegistered(ctx);
-        this.channel = ctx.channel();
-    }
+	public void close() {
+		channel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+	}
 
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        MessageResponse response = (MessageResponse) msg;
-        String messageId = response.getMessageId();
-        MessageCallBack callBack = mapCallBack.get(messageId);
-        if (callBack != null) {
-            mapCallBack.remove(messageId);
-            callBack.over(response);
-        }
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
-        ctx.close();
-    }
-
-    public void close() {
-        channel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    public MessageCallBack sendRequest(MessageRequest request) {
-        MessageCallBack callBack = new MessageCallBack(request);
-        mapCallBack.put(request.getMessageId(), callBack);
-        channel.writeAndFlush(request);
-        return callBack;
-    }
+	public MessageCallBack sendRequest(MessageRequest request) {
+		MessageCallBack callBack = new MessageCallBack(request);
+		mapCallBack.put(request.getMessageId(), callBack);
+		channel.writeAndFlush(request);
+		return callBack;
+	}
 }
