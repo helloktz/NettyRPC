@@ -14,12 +14,12 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class MessageSendHandler extends ChannelInboundHandlerAdapter {
-	private Map<String, MessageCallBack> mapCallBack = new ConcurrentHashMap<String, MessageCallBack>();
-	
+	private Map<String, MessageCallBack> mapCallBack = new ConcurrentHashMap<>();
+
 	@Getter
 	private volatile Channel channel;
 	@Getter
@@ -50,7 +50,7 @@ public class MessageSendHandler extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		log.error(cause);
+		log.error(cause.getMessage(), cause);
 		ctx.close();
 	}
 

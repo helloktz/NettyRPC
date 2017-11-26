@@ -3,9 +3,9 @@ package com.newlandframework.rpc.parallel.policy;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class BlockingPolicy implements RejectedExecutionHandler {
 	private String threadName;
 
@@ -27,6 +27,8 @@ public class BlockingPolicy implements RejectedExecutionHandler {
 			try {
 				executor.getQueue().put(runnable);
 			} catch (InterruptedException e) {
+				log.error(e.getMessage(), e);
+				Thread.currentThread().interrupt();
 			}
 		}
 	}

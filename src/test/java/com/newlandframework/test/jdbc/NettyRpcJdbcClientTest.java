@@ -4,21 +4,29 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.annotation.Resource;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.services.JdbcPersonManage;
 import com.newlandframework.rpc.services.pojo.Person;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
+@ContextConfiguration("classpath:rpc-invoke-config-jdbc-client.xml")
+@RunWith(SpringRunner.class)
 public class NettyRpcJdbcClientTest {
-	// FIXME: 2017/9/25
-	// 确保先启动NettyRPC服务端应用:NettyRpcJdbcServerTest，再运行NettyRpcJdbcClientTest、NettyRpcJdbcClientErrorTest！
-	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-jdbc-client.xml");
 
-		JdbcPersonManage manage = (JdbcPersonManage) context.getBean("personManageJdbc");
+	@Resource(name = "personManageJdbc")
+	private JdbcPersonManage manage;
+
+	// 确保先启动NettyRPC服务端应用:NettyRpcJdbcServerTest，再运行NettyRpcJdbcClientTest、NettyRpcJdbcClientErrorTest！
+	@Test
+	public void testNettyRpcJdbcClient() {
 
 		try {
 			Person p = new Person();
@@ -28,18 +36,13 @@ public class NettyRpcJdbcClientTest {
 			p.setBirthday(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2015-08-11 16:28:00"));
 			int result = manage.save(p);
 			manage.query(p);
-			System.out.println("call pojo rpc result:" + result);
-
-			System.out.println("---------------------------------------------");
+			log.info("call pojo rpc result:{}", result);
+			log.info("---------------------------------------------");
 
 			List<Person> list = manage.query();
-			for (int i = 0; i < list.size(); i++) {
-				System.out.println(list.get(i));
-			}
+			list.stream().map(Person::toString).forEach(log::info);
 		} catch (ParseException e) {
-			log.error(e);
-		} finally {
-			context.destroy();
+			log.error(e.getMessage(), e);
 		}
 	}
 }

@@ -2,17 +2,18 @@ package com.newlandframework.rpc.services.impl;
 
 import java.util.concurrent.TimeUnit;
 
+import com.newlandframework.rpc.exception.RPCRuntimeException;
 import com.newlandframework.rpc.services.PersonManage;
 import com.newlandframework.rpc.services.pojo.Person;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class PersonManageImpl implements PersonManage {
 	@Override
 	public int save(Person p) {
 		// your business logic code here!
-		System.out.println("person data[" + p + "] has save!");
+		log.info("person data[{}] has save!", p);
 		return 0;
 	}
 
@@ -21,9 +22,10 @@ public class PersonManageImpl implements PersonManage {
 		// your business logic code here!
 		try {
 			TimeUnit.SECONDS.sleep(3);
-			System.out.println("person data[" + p + "] has query!");
+			log.info("person data[{}] has query!", p);
 		} catch (InterruptedException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
+			Thread.currentThread().interrupt();
 		}
 	}
 
@@ -33,21 +35,22 @@ public class PersonManageImpl implements PersonManage {
 		try {
 			TimeUnit.SECONDS.sleep(timeout);
 		} catch (InterruptedException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
+			Thread.currentThread().interrupt();
 		}
 	}
 
 	@Override
 	public void check() {
-		throw new RuntimeException("person check fail!");
+		throw new RPCRuntimeException("person check fail!");
 	}
 
 	@Override
 	public boolean checkAge(Person p) {
 		if (p.getAge() < 18) {
-			throw new RuntimeException("person check age fail!");
+			throw new RPCRuntimeException("person check age fail!");
 		} else {
-			System.out.println("person check age succ!");
+			log.info("person check age succ!");
 			return true;
 		}
 	}

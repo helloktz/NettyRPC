@@ -11,9 +11,9 @@ import org.springframework.core.io.Resource;
 import com.google.common.io.CharStreams;
 
 import lombok.Cleanup;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class NettyRpcNamespaceHandler extends NamespaceHandlerSupport {
 	static {
 		Resource resource = new ClassPathResource("NettyRPC-logo.txt");
@@ -24,7 +24,7 @@ public class NettyRpcNamespaceHandler extends NamespaceHandlerSupport {
 				String text = CharStreams.toString(reader);
 				System.out.println(text);
 			} catch (IOException e) {
-				log.info(e);
+				log.info(e.getMessage(), e);
 			}
 		} else {
 			System.out.println("");
@@ -33,7 +33,7 @@ public class NettyRpcNamespaceHandler extends NamespaceHandlerSupport {
 			System.out.println("| |\\ |||  \\    / \\   / \\   \\  / |  \\/||  \\/||  /  ");
 			System.out.println("| | \\|||  /_   | |   | |   / /  |    /|  __/|  \\_ ");
 			System.out.println("\\_/  \\|\\____\\  \\_/   \\_/  /_/   \\_/\\_\\\\_/   \\____/");
-			System.out.println("[NettyRPC 2.0,Build 2016/10/7,Author:tangjie http://www.cnblogs.com/jietang/]");
+			System.out.println("[NettyRPC 2.0]");
 			System.out.println("");
 		}
 	}

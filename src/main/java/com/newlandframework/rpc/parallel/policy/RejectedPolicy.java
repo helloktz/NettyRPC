@@ -4,9 +4,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class RejectedPolicy implements RejectedExecutionHandler {
 	private final String threadName;
 
@@ -37,6 +37,8 @@ public class RejectedPolicy implements RejectedExecutionHandler {
 				try {
 					queue.put(runnable);
 				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					log.error(e.getMessage(), e);
 				}
 			}
 		}

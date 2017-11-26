@@ -6,8 +6,7 @@ import java.util.Map;
 import com.newlandframework.rpc.jmx.ModuleMetricsHandler;
 
 public class InvokeEventBusFacade {
-	private static Map<AbstractInvokeEventBus.ModuleEvent, AbstractInvokeEventBus> enumMap = new EnumMap<AbstractInvokeEventBus.ModuleEvent, AbstractInvokeEventBus>(
-			AbstractInvokeEventBus.ModuleEvent.class);
+	private static Map<AbstractInvokeEventBus.ModuleEvent, AbstractInvokeEventBus> enumMap = new EnumMap<>(AbstractInvokeEventBus.ModuleEvent.class);
 
 	static {
 		enumMap.put(AbstractInvokeEventBus.ModuleEvent.INVOKE_EVENT, new InvokeEvent());

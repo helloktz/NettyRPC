@@ -11,9 +11,9 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ProtostuffSerializePool {
 	@Getter
@@ -32,7 +32,7 @@ public class ProtostuffSerializePool {
 	}
 
 	public ProtostuffSerializePool(final int maxTotal, final int minIdle, final long maxWaitMillis, final long minEvictableIdleTimeMillis) {
-		protostuffPool = new GenericObjectPool<ProtostuffSerialize>(new ProtostuffSerializeFactory());
+		protostuffPool = new GenericObjectPool<>(new ProtostuffSerializeFactory());
 
 		GenericObjectPoolConfig config = new GenericObjectPoolConfig();
 
@@ -48,12 +48,12 @@ public class ProtostuffSerializePool {
 		try {
 			return getProtostuffPool().borrowObject();
 		} catch (Exception ex) {
-			log.error(ex);
+			log.error(ex.getMessage(), ex);
 			return null;
 		}
 	}
 
-	public void restore(final ProtostuffSerialize object) {
+	public void restore(ProtostuffSerialize object) {
 		getProtostuffPool().returnObject(object);
 	}
 }

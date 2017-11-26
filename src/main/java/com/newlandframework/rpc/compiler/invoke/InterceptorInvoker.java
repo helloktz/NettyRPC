@@ -1,6 +1,5 @@
 package com.newlandframework.rpc.compiler.invoke;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import com.newlandframework.rpc.compiler.intercept.Interceptor;
@@ -16,7 +15,7 @@ public class InterceptorInvoker extends AbstractInvoker {
 	}
 
 	@Override
-	public Object invokeImpl(Object proxy, Method method, Object[] args) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException  {
+	public Object invokeImpl(Object proxy, Method method, Object[] args) throws ReflectiveOperationException {
 		InvocationProvider invocation = new InvocationProvider(target, proxy, method, args);
 		return methodInterceptor.intercept(invocation);
 	}

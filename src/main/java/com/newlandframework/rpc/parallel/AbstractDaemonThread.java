@@ -1,9 +1,9 @@
 package com.newlandframework.rpc.parallel;
 
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public abstract class AbstractDaemonThread implements Runnable {
 	protected final Thread thread;
 	private static final long JOIN_TIME = 90 * 1000L;
@@ -38,7 +38,7 @@ public abstract class AbstractDaemonThread implements Runnable {
 		synchronized (this) {
 			if (!this.hasNotified) {
 				this.hasNotified = true;
-				this.notify();
+				this.notifyAll();
 			}
 		}
 
@@ -52,7 +52,7 @@ public abstract class AbstractDaemonThread implements Runnable {
 		synchronized (this) {
 			if (!this.hasNotified) {
 				this.hasNotified = true;
-				this.notify();
+				this.notifyAll();
 			}
 		}
 
@@ -65,7 +65,8 @@ public abstract class AbstractDaemonThread implements Runnable {
 				this.thread.join(this.getJoinTime());
 			}
 		} catch (InterruptedException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
+			Thread.currentThread().interrupt();
 		}
 	}
 
@@ -73,7 +74,7 @@ public abstract class AbstractDaemonThread implements Runnable {
 		synchronized (this) {
 			if (!this.hasNotified) {
 				this.hasNotified = true;
-				this.notify();
+				this.notifyAll();
 			}
 		}
 	}
@@ -89,7 +90,8 @@ public abstract class AbstractDaemonThread implements Runnable {
 			try {
 				this.wait(interval);
 			} catch (InterruptedException e) {
-				log.error(e);
+				log.error(e.getMessage(), e);
+				Thread.currentThread().interrupt();
 			} finally {
 				this.hasNotified = false;
 				this.onWaitEnd();

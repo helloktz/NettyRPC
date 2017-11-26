@@ -13,7 +13,7 @@ public class HessianSerializeFactory extends BasePooledObjectFactory<HessianSeri
 
 	@Override
 	public PooledObject<HessianSerialize> wrap(HessianSerialize hessian) {
-		return new DefaultPooledObject<HessianSerialize>(hessian);
+		return new DefaultPooledObject<>(hessian);
 	}
 
 	private HessianSerialize createHessian() {

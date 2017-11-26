@@ -1,25 +1,10 @@
 package com.newlandframework.rpc.services.impl;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.google.common.cache.CacheBuilder;
 import com.newlandframework.rpc.services.Cache;
 
 public class CacheImpl implements Cache {
-	private final Map<Object, Object> store;
-
-	public CacheImpl() {
-		final int max = 256;
-		this.store = new LinkedHashMap<Object, Object>() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected boolean removeEldestEntry(Entry<Object, Object> eldest) {
-				return size() > max;
-			}
-		};
-	}
+	private final com.google.common.cache.Cache<Object, Object> store = CacheBuilder.newBuilder().maximumSize(256).build();
 
 	@Override
 	public void put(Object key, Object value) {
@@ -28,6 +13,6 @@ public class CacheImpl implements Cache {
 
 	@Override
 	public Object get(Object key) {
-		return store.get(key);
+		return store.getIfPresent(key);
 	}
 }

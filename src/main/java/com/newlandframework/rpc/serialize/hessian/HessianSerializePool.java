@@ -11,9 +11,9 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class HessianSerializePool {
 	@Getter
@@ -32,7 +32,7 @@ public class HessianSerializePool {
 	}
 
 	public HessianSerializePool(final int maxTotal, final int minIdle, final long maxWaitMillis, final long minEvictableIdleTimeMillis) {
-		hessianPool = new GenericObjectPool<HessianSerialize>(new HessianSerializeFactory());
+		hessianPool = new GenericObjectPool<>(new HessianSerializeFactory());
 
 		GenericObjectPoolConfig config = new GenericObjectPoolConfig();
 
@@ -48,12 +48,12 @@ public class HessianSerializePool {
 		try {
 			return getHessianPool().borrowObject();
 		} catch (Exception ex) {
-			log.error(ex);
+			log.error(ex.getMessage(), ex);
 			return null;
 		}
 	}
 
-	public void restore(final HessianSerialize object) {
+	public void restore(HessianSerialize object) {
 		getHessianPool().returnObject(object);
 	}
 }

@@ -1,37 +1,32 @@
 package com.newlandframework.test;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.annotation.Resource;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.async.AsyncCallObject;
-import com.newlandframework.rpc.async.AsyncCallback;
 import com.newlandframework.rpc.async.AsyncInvoker;
-import com.newlandframework.rpc.exception.InvokeTimeoutException;
 import com.newlandframework.rpc.services.CostTimeCalculate;
 import com.newlandframework.rpc.services.pojo.CostTime;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RunWith(SpringRunner.class)
+@ContextConfiguration("classpath:rpc-invoke-config-client.xml")
 public class AsyncRpcTimeoutCallTest {
-	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-client.xml");
 
-		final CostTimeCalculate calculate = (CostTimeCalculate) context.getBean("costTime");
+	@Resource(name = "costTime")
+	private CostTimeCalculate calculate;
 
+	@Test
+	public void AsyncRpcTimeoutCall() {
 		AsyncInvoker invoker = new AsyncInvoker();
+		CostTime elapse0 = invoker.submit(() -> calculate.busy());
 
-		try {
-			CostTime elapse0 = invoker.submit(new AsyncCallback<CostTime>() {
-				@Override
-				public CostTime call() {
-					return calculate.busy();
-				}
-			});
-
-			System.out.println("1 async nettyrpc call:[" + "result:" + elapse0 + ", status:[" + ((AsyncCallObject) elapse0)._getStatus() + "]");
-		} catch (InvokeTimeoutException e) {
-			System.out.println(e.getMessage());
-			context.destroy();
-			return;
-		}
-
-		context.destroy();
+		log.info("1 async nettyrpc call:[result:{}, status:[{}]", elapse0, ((AsyncCallObject) elapse0)._getStatus());
 	}
 }

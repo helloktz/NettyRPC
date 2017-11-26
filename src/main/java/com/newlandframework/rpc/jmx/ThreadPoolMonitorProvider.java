@@ -22,6 +22,9 @@ import org.springframework.remoting.rmi.RmiRegistryFactoryBean;
 
 import com.newlandframework.rpc.netty.MessageRecvExecutor;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Configuration
 @EnableMBeanExport
 @ComponentScan("com.newlandframework.rpc.jmx")
@@ -57,7 +60,7 @@ public class ThreadPoolMonitorProvider {
 		MessageRecvExecutor ref = MessageRecvExecutor.getInstance();
 		String ipAddr = StringUtils.isNotEmpty(ref.getServerAddress()) ? StringUtils.substringBeforeLast(ref.getServerAddress(), DELIMITER) : "localhost";
 		url = "service:jmx:rmi://" + ipAddr + "/jndi/rmi://" + ipAddr + ":1099/nettyrpcstatus";
-		System.out.println("NettyRPC JMX MonitorURL : [" + url + "]");
+		log.info("NettyRPC JMX MonitorURL : [{}]", url);
 		ConnectorServerFactoryBean connectorServerFactoryBean = new ConnectorServerFactoryBean();
 		connectorServerFactoryBean.setObjectName("connector:name=rmi");
 		connectorServerFactoryBean.setServiceUrl(url);

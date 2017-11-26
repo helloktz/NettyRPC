@@ -2,9 +2,9 @@ package com.newlandframework.rpc.parallel.policy;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class AbortPolicy extends ThreadPoolExecutor.AbortPolicy {
 	private String threadName;
 
@@ -26,7 +26,7 @@ public class AbortPolicy extends ThreadPoolExecutor.AbortPolicy {
 						+ " Executor status:(isShutdown:%s, isTerminated:%s, isTerminating:%s)]",
 				threadName, executor.getPoolSize(), executor.getActiveCount(), executor.getCorePoolSize(), executor.getMaximumPoolSize(), executor.getLargestPoolSize(), executor.getTaskCount(),
 				executor.getCompletedTaskCount(), executor.isShutdown(), executor.isTerminated(), executor.isTerminating());
-		System.out.println(msg);
+		log.info(msg);
 		super.rejectedExecution(runnable, executor);
 	}
 }

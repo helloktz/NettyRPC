@@ -1,36 +1,50 @@
 package com.newlandframework.test;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.annotation.Resource;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.exception.RejectResponeException;
 import com.newlandframework.rpc.services.Cache;
 import com.newlandframework.rpc.services.Store;
 
-public class RpcFilterTest {
-	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-client.xml");
+import lombok.extern.slf4j.Slf4j;
 
-		Cache cache = (Cache) context.getBean("cache");
+@Slf4j
+@RunWith(SpringRunner.class)
+@ContextConfiguration("classpath:rpc-invoke-config-client.xml")
+public class RpcFilterTest {
+
+	@Resource(name = "cache")
+	private Cache cache;
+
+	@Resource(name = "store")
+	private Store store;
+
+	@Test
+	public void testRpcFilter() {
 
 		for (int i = 0; i < 100; i++) {
 			String obj = String.valueOf(i);
 			try {
 				cache.put(obj, obj);
 			} catch (RejectResponeException ex) {
-				System.out.println("trace:" + ex.getMessage());
+				log.error(ex.getMessage(), ex);
 			}
 		}
 
 		for (int i = 0; i < 100; i++) {
 			String obj = String.valueOf(i);
 			try {
+				log.info((String) cache.get(obj));
 				System.out.println((String) cache.get(obj));
 			} catch (RejectResponeException ex) {
-				System.out.println("trace:" + ex.getMessage());
+				log.error(ex.getMessage(), ex);
 			}
 		}
-
-		Store store = (Store) context.getBean("store");
 
 		for (int i = 0; i < 100; i++) {
 			String obj = String.valueOf(i);
@@ -38,10 +52,8 @@ public class RpcFilterTest {
 				store.save(obj);
 				store.save(i);
 			} catch (RejectResponeException ex) {
-				System.out.println("trace:" + ex.getMessage());
+				log.error(ex.getMessage(), ex);
 			}
 		}
-
-		context.destroy();
 	}
 }

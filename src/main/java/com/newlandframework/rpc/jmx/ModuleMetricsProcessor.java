@@ -10,22 +10,22 @@ import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.CompositeDataSupport;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class ModuleMetricsProcessor {
 	private static final ModuleMetricsProcessor INSTANCE = new ModuleMetricsProcessor();
 	private MBeanServerConnection connection;
-	private final static String TD_BEGIN = "<td>";
-	private final static String TD_END = "</td>";
-	private final static String TR_BEGIN = "<tr>";
-	private final static String TR_END = "</tr>";
-	private final static String BR = "</br>";
-	private final static String TABLE_BEGIN = "<html><body><div class=\"table-container\"><table border=\"1\"><tr><th>模块名称</th><th>方法名称</th><th>调用次数</th><th>调用成功次数</th><th>调用失败次数</th><th>被过滤次数</th><th>方法耗时（毫秒）</th><th>方法最大耗时（毫秒）</th><th>方法最小耗时（毫秒）</th><th>方法耗时区间分布</th><th>最后一次失败时间</th><th>最后一次失败堆栈明细</th></tr>";
-	private final static String TABLE_END = "</table></body></html>";
-	private final static String SUB_TABLE_BEGIN = "<table border=\"1\">";
-	private final static String SUB_TABLE_END = "</table>";
-	private final static String JMX_METRICS_ATTR = "ModuleMetricsVisitor";
+	private static final String TD_BEGIN = "<td>";
+	private static final String TD_END = "</td>";
+	private static final String TR_BEGIN = "<tr>";
+	private static final String TR_END = "</tr>";
+	private static final String BR = "</br>";
+	private static final String TABLE_BEGIN = "<html><body><div class=\"table-container\"><table border=\"1\"><tr><th>模块名称</th><th>方法名称</th><th>调用次数</th><th>调用成功次数</th><th>调用失败次数</th><th>被过滤次数</th><th>方法耗时（毫秒）</th><th>方法最大耗时（毫秒）</th><th>方法最小耗时（毫秒）</th><th>方法耗时区间分布</th><th>最后一次失败时间</th><th>最后一次失败堆栈明细</th></tr>";
+	private static final String TABLE_END = "</table></body></html>";
+	private static final String SUB_TABLE_BEGIN = "<table border=\"1\">";
+	private static final String SUB_TABLE_END = "</table>";
+	private static final String JMX_METRICS_ATTR = "ModuleMetricsVisitor";
 
 	public static ModuleMetricsProcessor getInstance() {
 		return INSTANCE;
@@ -47,7 +47,8 @@ public class ModuleMetricsProcessor {
 					TimeUnit.SECONDS.sleep(1L);
 					connection = handler.connect();
 				} catch (InterruptedException e) {
-					log.error(e);
+					log.error(e.getMessage(), e);
+					Thread.currentThread().interrupt();
 				}
 			}
 		}
@@ -76,7 +77,7 @@ public class ModuleMetricsProcessor {
 		try {
 			name = new ObjectName(ModuleMetricsHandler.MBEAN_NAME);
 		} catch (MalformedObjectNameException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
 		}
 
 		try {
@@ -115,7 +116,7 @@ public class ModuleMetricsProcessor {
 			}
 			metrics.append(TABLE_END);
 		} catch (JMException | IOException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
 		}
 
 		return metrics.toString();

@@ -5,10 +5,10 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.ToString;
 
-@ToString(exclude = { "typeParameters", "parametersVal" })
 @Data
+@SuppressWarnings("serial")
+@ToString(exclude = { "typeParameters", "parametersVal" })
 public class MessageRequest implements Serializable {
-	private static final long serialVersionUID = 1L;
 
 	private String messageId;
 	private String className;

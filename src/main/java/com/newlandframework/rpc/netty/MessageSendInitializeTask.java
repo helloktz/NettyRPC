@@ -11,10 +11,11 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class MessageSendInitializeTask implements Callable<Boolean> {
 
 	private EventLoopGroup eventLoopGroup = null;
@@ -41,12 +42,9 @@ public class MessageSendInitializeTask implements Callable<Boolean> {
 					MessageSendHandler handler = channelFuture.channel().pipeline().get(MessageSendHandler.class);
 					RpcServerLoader.getInstance().setMessageSendHandler(handler);
 				} else {
-					EventLoop loop = (EventLoop) eventLoopGroup.schedule(new Runnable() {
-						@Override
-						public void run() {
-							System.out.println("NettyRPC server is down,start to reconnecting to: " + serverAddress.getAddress().getHostAddress() + ':' + serverAddress.getPort());
-							call();
-						}
+					eventLoopGroup.schedule(() -> {
+						log.warn("NettyRPC server is down,start to reconnecting to: {}:{}", serverAddress.getAddress().getHostAddress(), serverAddress.getPort());
+						call();
 					}, RpcSystemConfig.SYSTEM_PROPERTY_CLIENT_RECONNECT_DELAY, TimeUnit.SECONDS);
 				}
 			}

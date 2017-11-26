@@ -13,7 +13,7 @@ public class ProtostuffSerializeFactory extends BasePooledObjectFactory<Protostu
 
 	@Override
 	public PooledObject<ProtostuffSerialize> wrap(ProtostuffSerialize protostuff) {
-		return new DefaultPooledObject<ProtostuffSerialize>(protostuff);
+		return new DefaultPooledObject<>(protostuff);
 	}
 
 	private ProtostuffSerialize createProtostuff() {

@@ -14,9 +14,9 @@ import com.newlandframework.rpc.model.MessageResponse;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public abstract class AbstractMessageRecvInitializeTask implements Callable<Boolean> {
 	@Getter
 	@Setter
@@ -50,7 +50,7 @@ public abstract class AbstractMessageRecvInitializeTask implements Callable<Bool
 				response.setReturnNotNull(returnNotNull);
 				injectSuccInvoke(invokeTimespan);
 			} else {
-				System.err.println(RpcSystemConfig.FILTER_RESPONSE_MSG);
+				log.error(RpcSystemConfig.FILTER_RESPONSE_MSG);
 				response.setResult(null);
 				response.setError(RpcSystemConfig.FILTER_RESPONSE_MSG);
 				injectFilterInvoke();

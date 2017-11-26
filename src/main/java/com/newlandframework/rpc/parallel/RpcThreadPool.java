@@ -5,7 +5,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
@@ -24,9 +23,9 @@ import com.newlandframework.rpc.parallel.policy.DiscardedPolicy;
 import com.newlandframework.rpc.parallel.policy.RejectedPolicy;
 import com.newlandframework.rpc.parallel.policy.RejectedPolicyType;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class RpcThreadPool {
 	private static final Timer TIMER = new Timer("ThreadPoolMonitor", true);
 	private static long monitorDelay = 100L;
@@ -46,9 +45,6 @@ public class RpcThreadPool {
 			return new RejectedPolicy();
 		case DISCARDED_POLICY:
 			return new DiscardedPolicy();
-		default: {
-			break;
-		}
 		}
 
 		return null;
@@ -59,28 +55,24 @@ public class RpcThreadPool {
 
 		switch (queueType) {
 		case LINKED_BLOCKING_QUEUE:
-			return new LinkedBlockingQueue<Runnable>();
+			return new LinkedBlockingQueue<>();
 		case ARRAY_BLOCKING_QUEUE:
-			return new ArrayBlockingQueue<Runnable>(RpcSystemConfig.SYSTEM_PROPERTY_PARALLEL * queues);
+			return new ArrayBlockingQueue<>(RpcSystemConfig.SYSTEM_PROPERTY_PARALLEL * queues);
 		case SYNCHRONOUS_QUEUE:
-			return new SynchronousQueue<Runnable>();
-		default: {
-			break;
+			return new SynchronousQueue<>();
+		default:
+			throw new NullPointerException();
 		}
-		}
-
-		return null;
 	}
 
-	public static Executor getExecutor(int threads, int queues) {
-		System.out.println("ThreadPool Core[threads:" + threads + ", queues:" + queues + "]");
+	public static ThreadPoolExecutor getExecutor(int threads, int queues) {
+		log.info("ThreadPool Core[threads:{}, queues:{}]", threads, queues);
 		String name = "RpcThreadPool";
-		ThreadPoolExecutor executor = new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MILLISECONDS, createBlockingQueue(queues), new NamedThreadFactory(name, true), createPolicy());
-		return executor;
+		return new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MILLISECONDS, createBlockingQueue(queues), new NamedThreadFactory(name, true), createPolicy());
 	}
 
-	public static Executor getExecutorWithJmx(int threads, int queues) {
-		final ThreadPoolExecutor executor = (ThreadPoolExecutor) getExecutor(threads, queues);
+	public static ThreadPoolExecutor getExecutorWithJmx(int threads, int queues) {
+		ThreadPoolExecutor executor = getExecutor(threads, queues);
 		TIMER.scheduleAtFixedRate(new TimerTask() {
 
 			@Override
@@ -97,7 +89,7 @@ public class RpcThreadPool {
 				try {
 					ThreadPoolMonitorProvider.monitor(status);
 				} catch (JMException | IOException e) {
-					log.error(e);
+					log.error(e.getMessage(), e);
 				}
 			}
 		}, monitorDelay, monitorDelay);

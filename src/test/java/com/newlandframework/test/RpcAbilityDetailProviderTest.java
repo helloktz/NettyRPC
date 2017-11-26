@@ -1,19 +1,27 @@
 package com.newlandframework.test;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.annotation.Resource;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.core.AbilityDetail;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RunWith(SpringRunner.class)
+@ContextConfiguration("classpath:rpc-invoke-config-client.xml")
 public class RpcAbilityDetailProviderTest {
-	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-client.xml");
 
-		AbilityDetail provider = (AbilityDetail) context.getBean("ability");
+	@Resource(name = "ability")
+	private AbilityDetail provider;
 
+	@Test
+	public void testRpcAbilityDetailProvider() {
 		StringBuilder ability = provider.listAbilityDetail(false);
-
-		System.out.println(ability);
-
-		context.destroy();
+		log.info(ability.toString());
 	}
 }

@@ -1,24 +1,25 @@
 package com.newlandframework.rpc.jmx;
 
+import static com.newlandframework.rpc.core.RpcSystemConfig.SYSTEM_PROPERTY_JMX_METRICS_HASH_NUMS;
+import static java.util.stream.Collectors.toList;
+
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.IntStream;
 
 import com.newlandframework.rpc.core.ReflectionUtils;
-import com.newlandframework.rpc.core.RpcSystemConfig;
 import com.newlandframework.rpc.netty.MessageRecvExecutor;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class HashModuleMetricsVisitor {
 	@Setter
 	@Getter
-	private List<List<ModuleMetricsVisitor>> hashVisitorList = new ArrayList<List<ModuleMetricsVisitor>>();
+	private List<List<ModuleMetricsVisitor>> hashVisitorList = new ArrayList<>();
 
 	private static final HashModuleMetricsVisitor INSTANCE = new HashModuleMetricsVisitor();
 
@@ -35,28 +36,27 @@ public class HashModuleMetricsVisitor {
 	}
 
 	private void init() {
-		Map<String, Object> map = MessageRecvExecutor.getInstance().getHandlerMap();
-		ReflectionUtils utils = new ReflectionUtils();
-		Set<String> s = map.keySet();
-		Iterator<String> iter = s.iterator();
-		String key;
-		while (iter.hasNext()) {
-			key = iter.next();
-			try {
-				List<String> list = utils.getClassMethodSignature(Class.forName(key));
-				for (String signature : list) {
-					List<ModuleMetricsVisitor> visitorList = new ArrayList<ModuleMetricsVisitor>();
-					for (int i = 0; i < RpcSystemConfig.SYSTEM_PROPERTY_JMX_METRICS_HASH_NUMS; i++) {
-						ModuleMetricsVisitor visitor = new ModuleMetricsVisitor(key, signature);
-						visitor.setHashKey(i);
-						visitorList.add(visitor);
-					}
-					hashVisitorList.add(visitorList);
-				}
-			} catch (ClassNotFoundException e) {
-				log.error(e);
-			}
+		final Map<String, ?> map = MessageRecvExecutor.getInstance().getHandlerMap();
+		final ReflectionUtils utils = new ReflectionUtils();
+		map.keySet().stream().forEach(key -> enrichHashVistors(utils, key));
+	}
+
+	private void enrichHashVistors(ReflectionUtils utils, String key) {
+		try {
+			List<String> list = utils.getClassMethodSignature(Class.forName(key));
+			list.stream().forEach(signature -> hashVisitorList.add(generateVistors(key, signature)));
+		} catch (ClassNotFoundException e) {
+			log.error(e.getMessage(), e);
 		}
+	}
+
+	private List<ModuleMetricsVisitor> generateVistors(String key, String signature) {
+		List<ModuleMetricsVisitor> visitorList = IntStream.range(0, SYSTEM_PROPERTY_JMX_METRICS_HASH_NUMS).mapToObj(i -> {
+			ModuleMetricsVisitor visitor = new ModuleMetricsVisitor(key, signature);
+			visitor.setHashKey(i);
+			return visitor;
+		}).collect(toList());
+		return visitorList;
 	}
 
 	public void signal() {

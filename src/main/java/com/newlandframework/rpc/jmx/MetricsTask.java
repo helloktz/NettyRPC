@@ -12,15 +12,15 @@ import org.apache.commons.collections4.iterators.UniqueFilterIterator;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class MetricsTask implements Runnable {
 	private final CyclicBarrier barrier;
 	private List<ModuleMetricsVisitor> visitorList;
 	@Getter
 	@Setter
-	private List<ModuleMetricsVisitor> result = new ArrayList<ModuleMetricsVisitor>();
+	private List<ModuleMetricsVisitor> result = new ArrayList<>();
 
 	public MetricsTask(CyclicBarrier barrier, List<ModuleMetricsVisitor> visitorList) {
 		this.barrier = barrier;
@@ -34,7 +34,7 @@ public class MetricsTask implements Runnable {
 			accumulate();
 			barrier.await();
 		} catch (InterruptedException | BrokenBarrierException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
 		}
 	}
 

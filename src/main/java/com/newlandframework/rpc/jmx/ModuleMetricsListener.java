@@ -7,9 +7,9 @@ import javax.management.NotificationListener;
 
 import com.newlandframework.rpc.event.AbstractInvokeEventBus;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class ModuleMetricsListener implements NotificationListener {
 	@Override
 	public void handleNotification(Notification notification, Object handback) {
@@ -53,7 +53,7 @@ public class ModuleMetricsListener implements NotificationListener {
 				visitor.setLastStackTrace((Exception) acn.getNewValue());
 				visitor.buildErrorCompositeData((Exception) acn.getNewValue());
 			} catch (JMException e) {
-				log.error(e);
+				log.error(e.getMessage(), e);
 			}
 			break;
 		}

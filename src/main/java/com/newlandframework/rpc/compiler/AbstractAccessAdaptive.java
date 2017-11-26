@@ -8,9 +8,9 @@ import com.newlandframework.rpc.compiler.weaver.ClassProxy;
 import com.newlandframework.rpc.compiler.weaver.ProxyProvider;
 
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public abstract class AbstractAccessAdaptive implements Compiler {
 	private static final Pattern PACKAGE_PATTERN = Pattern.compile("package\\s+([$_a-zA-Z][$_a-zA-Z0-9\\.]*);");
 
@@ -38,6 +38,7 @@ public abstract class AbstractAccessAdaptive implements Compiler {
 		try {
 			cl = Thread.currentThread().getContextClassLoader();
 		} catch (Exception ex) {
+			log.error(ex.getMessage(), ex);
 		}
 		if (cl == null) {
 			cl = AbstractAccessAdaptive.class.getClassLoader();
@@ -45,6 +46,7 @@ public abstract class AbstractAccessAdaptive implements Compiler {
 				try {
 					cl = ClassLoader.getSystemClassLoader();
 				} catch (Exception ex) {
+					log.error(ex.getMessage(), ex);
 				}
 			}
 		}
@@ -52,8 +54,8 @@ public abstract class AbstractAccessAdaptive implements Compiler {
 	}
 
 	@Override
-	public Class<?> compile(String code, ClassLoader classLoader) {
-		code = code.trim();
+	public Class<?> compile(String sourceCode, ClassLoader classLoader) {
+		String code = sourceCode.trim();
 		Matcher matcher = PACKAGE_PATTERN.matcher(code);
 		String pkg;
 		if (matcher.find()) {
@@ -78,7 +80,7 @@ public abstract class AbstractAccessAdaptive implements Compiler {
 			try {
 				return doCompile(className, code);
 			} catch (Exception t) {
-				log.error(t);
+				log.error(t.getMessage(), t);
 				throw new IllegalStateException("failed to compile class, cause: " + t.getMessage() + ", class: " + className + ", code: \n" + code, t);
 			} finally {
 				overrideThreadContextClassLoader(compiler.getClassLoader());

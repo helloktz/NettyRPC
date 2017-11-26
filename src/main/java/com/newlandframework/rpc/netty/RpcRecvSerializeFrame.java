@@ -34,25 +34,22 @@ public class RpcRecvSerializeFrame implements RpcSerializeFrame {
 	@Override
 	public void select(RpcSerializeProtocol protocol, ChannelPipeline pipeline) {
 		switch (protocol) {
-		case JDKSERIALIZE: {
-			handler.getInstance(JdkNativeRecvHandler.class).handle(handlerMap, pipeline);
+		case JDKSERIALIZE:
+			addHandlersToPipeline(JdkNativeRecvHandler.class, pipeline);
+			break;
+		case KRYOSERIALIZE:
+			addHandlersToPipeline(KryoRecvHandler.class, pipeline);
+			break;
+		case HESSIANSERIALIZE:
+			addHandlersToPipeline(HessianRecvHandler.class, pipeline);
+			break;
+		case PROTOSTUFFSERIALIZE:
+			addHandlersToPipeline(ProtostuffRecvHandler.class, pipeline);
 			break;
 		}
-		case KRYOSERIALIZE: {
-			handler.getInstance(KryoRecvHandler.class).handle(handlerMap, pipeline);
-			break;
-		}
-		case HESSIANSERIALIZE: {
-			handler.getInstance(HessianRecvHandler.class).handle(handlerMap, pipeline);
-			break;
-		}
-		case PROTOSTUFFSERIALIZE: {
-			handler.getInstance(ProtostuffRecvHandler.class).handle(handlerMap, pipeline);
-			break;
-		}
-		default: {
-			break;
-		}
-		}
+	}
+
+	private void addHandlersToPipeline(Class<? extends NettyRpcRecvHandler> handlerType, ChannelPipeline pipeline) {
+		handler.getInstance(handlerType).handle(handlerMap, pipeline);
 	}
 }

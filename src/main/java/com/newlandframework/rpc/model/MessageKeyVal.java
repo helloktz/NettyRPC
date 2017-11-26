@@ -6,5 +6,5 @@ import lombok.Data;
 
 @Data
 public class MessageKeyVal {
-	private Map<String, Object> messageKeyVal;
+	private Map<String, Object> messageMap;
 }

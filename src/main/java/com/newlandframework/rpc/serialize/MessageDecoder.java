@@ -3,17 +3,15 @@ package com.newlandframework.rpc.serialize;
 import java.io.IOException;
 import java.util.List;
 
-import com.esotericsoftware.minlog.Log;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class MessageDecoder extends ByteToMessageDecoder {
+	public static final int MESSAGE_LENGTH = 4;
 
-	final public static int MESSAGE_LENGTH = MessageCodecUtil.MESSAGE_LENGTH;
 	private MessageCodecUtil util = null;
 
 	public MessageDecoder(final MessageCodecUtil util) {
@@ -44,7 +42,7 @@ public class MessageDecoder extends ByteToMessageDecoder {
 				Object obj = util.decode(messageBody);
 				out.add(obj);
 			} catch (IOException ex) {
-				log.error(ex);
+				log.error(ex.getMessage(), ex);
 			}
 		}
 	}

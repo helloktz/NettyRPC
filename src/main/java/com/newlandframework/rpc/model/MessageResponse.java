@@ -5,8 +5,8 @@ import java.io.Serializable;
 import lombok.Data;
 
 @Data
+@SuppressWarnings("serial")
 public class MessageResponse implements Serializable {
-	private static final long serialVersionUID = 1L;
 
 	private String messageId;
 	private String error;

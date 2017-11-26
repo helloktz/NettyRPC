@@ -26,8 +26,8 @@ public class AsyncCallObjectInterceptor implements MethodInterceptor {
 		long startTime = 0L;
 		long endTime = 0L;
 		if (future instanceof AsyncFuture) {
-			startTime = ((AsyncFuture) future).getStartTime();
-			endTime = ((AsyncFuture) future).getEndTime();
+			startTime = ((AsyncFuture<?>) future).getStartTime();
+			endTime = ((AsyncFuture<?>) future).getEndTime();
 		}
 
 		CallStatus status = null;

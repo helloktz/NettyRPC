@@ -7,7 +7,7 @@ import com.google.common.reflect.AbstractInvocationHandler;
 import com.newlandframework.rpc.core.MessageCallBack;
 import com.newlandframework.rpc.model.MessageRequest;
 
-public class MessageSendProxy<T> extends AbstractInvocationHandler {
+public class MessageSendProxy extends AbstractInvocationHandler {
 
 	@Override
 	public Object handleInvocation(Object proxy, Method method, Object[] args) throws InterruptedException {

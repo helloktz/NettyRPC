@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MessageSendExecutor {
+	@NoArgsConstructor(access = AccessLevel.PRIVATE)
 	private static class MessageSendExecutorHolder {
 		private static final MessageSendExecutor INSTANCE = new MessageSendExecutor();
 	}
@@ -30,7 +31,7 @@ public class MessageSendExecutor {
 		loader.unLoad();
 	}
 
-	public <T> T execute(Class<T> rpcInterface) throws Exception {
-		return Reflection.newProxy(rpcInterface, new MessageSendProxy<T>());
+	public <T> T execute(Class<T> rpcInterface) {
+		return Reflection.newProxy(rpcInterface, new MessageSendProxy());
 	}
 }

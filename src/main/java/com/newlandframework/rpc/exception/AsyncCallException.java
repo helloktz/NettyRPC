@@ -1,7 +1,7 @@
 package com.newlandframework.rpc.exception;
 
+@SuppressWarnings("serial")
 public class AsyncCallException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
 
 	public AsyncCallException() {
 		super();

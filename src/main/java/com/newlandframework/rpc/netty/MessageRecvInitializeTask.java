@@ -20,9 +20,9 @@ import com.newlandframework.rpc.model.MessageResponse;
 import com.newlandframework.rpc.parallel.SemaphoreWrapperFactory;
 
 public class MessageRecvInitializeTask extends AbstractMessageRecvInitializeTask {
-	private AtomicReference<ModuleMetricsVisitor> visitor = new AtomicReference<ModuleMetricsVisitor>();
-	private AtomicReference<InvokeEventBusFacade> facade = new AtomicReference<InvokeEventBusFacade>();
-	private AtomicReference<InvokeEventWatcher> watcher = new AtomicReference<InvokeEventWatcher>(new InvokeEventWatcher());
+	private AtomicReference<ModuleMetricsVisitor> visitor = new AtomicReference<>();
+	private AtomicReference<InvokeEventBusFacade> facade = new AtomicReference<>();
+	private AtomicReference<InvokeEventWatcher> watcher = new AtomicReference<>(new InvokeEventWatcher());
 	private SemaphoreWrapperFactory factory = SemaphoreWrapperFactory.getInstance();
 
 	public MessageRecvInitializeTask(MessageRequest request, MessageResponse response, Map<String, Object> handlerMap) {

@@ -4,9 +4,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class DiscardedPolicy implements RejectedExecutionHandler {
 	private String threadName;
 
@@ -31,7 +31,9 @@ public class DiscardedPolicy implements RejectedExecutionHandler {
 				queue.poll();
 			}
 
-			queue.offer(runnable);
+			if (!queue.offer(runnable)) {
+				log.error("offer runnable failed!");
+			}
 		}
 	}
 }

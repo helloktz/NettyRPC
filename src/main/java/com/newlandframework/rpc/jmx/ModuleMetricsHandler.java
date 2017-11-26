@@ -5,8 +5,7 @@ import static com.newlandframework.rpc.core.RpcSystemConfig.DELIMITER;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.rmi.registry.LocateRegistry;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
@@ -15,14 +14,11 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
-import org.apache.commons.collections4.Predicate;
-import org.apache.commons.collections4.iterators.FilterIterator;
 import org.apache.commons.lang3.StringUtils;
 
 import com.newlandframework.rpc.netty.MessageRecvExecutor;
@@ -31,12 +27,12 @@ import com.newlandframework.rpc.parallel.SemaphoreWrapper;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class ModuleMetricsHandler extends AbstractModuleMetricsHandler {
-	public final static String MBEAN_NAME = "com.newlandframework.rpc:type=ModuleMetricsHandler";
-	public final static int MODULE_METRICS_JMX_PORT = 1098;
+	public static final String MBEAN_NAME = "com.newlandframework.rpc:type=ModuleMetricsHandler";
+	public static final int MODULE_METRICS_JMX_PORT = 1098;
 	private String moduleMetricsJmxUrl = "";
 	private Semaphore semaphore = new Semaphore(0);
 	private SemaphoreWrapper semaphoreWrapper = new SemaphoreWrapper(semaphore);
@@ -57,39 +53,18 @@ public class ModuleMetricsHandler extends AbstractModuleMetricsHandler {
 	}
 
 	@Override
-	public List<ModuleMetricsVisitor> getModuleMetricsVisitor() {
-		return super.getModuleMetricsVisitor();
-	}
-
-	@Override
 	protected ModuleMetricsVisitor visitCriticalSection(String moduleName, String methodName) {
 		final String method = methodName.trim();
 		final String module = moduleName.trim();
 
-		// FIXME: 2017/10/13 by tangjie
 		// JMX度量临界区要注意线程间的并发竞争,否则会统计数据失真
-		Iterator iterator = new FilterIterator(visitorList.iterator(), new Predicate() {
-			@Override
-			public boolean evaluate(Object object) {
-				String statModuleName = ((ModuleMetricsVisitor) object).getModuleName();
-				String statMethodName = ((ModuleMetricsVisitor) object).getMethodName();
-				return statModuleName.compareTo(module) == 0 && statMethodName.compareTo(method) == 0;
-			}
-		});
+		Optional<ModuleMetricsVisitor> option = visitorList.stream().filter(m -> module.equals(m.getModuleName()) && method.equals(m.getMethodName())).findFirst();
 
-		ModuleMetricsVisitor visitor = null;
-		while (iterator.hasNext()) {
-			visitor = (ModuleMetricsVisitor) iterator.next();
-			break;
-		}
-
-		if (visitor != null) {
-			return visitor;
-		} else {
-			visitor = new ModuleMetricsVisitor(module, method);
+		return option.orElseGet(() -> {
+			ModuleMetricsVisitor visitor = new ModuleMetricsVisitor(module, method);
 			addModuleMetricsVisitor(visitor);
 			return visitor;
-		}
+		});
 	}
 
 	public void start() {
@@ -119,9 +94,10 @@ public class ModuleMetricsHandler extends AbstractModuleMetricsHandler {
 
 					semaphoreWrapper.release();
 
-					System.out.printf("NettyRPC JMX server is start success!\njmx-url:[ %s ]\n\n", moduleMetricsJmxUrl);
+					log.info("NettyRPC JMX server is start success!");
+					log.info("jmx-url:[ {} ]", moduleMetricsJmxUrl);
 				} catch (JMException | IOException | InterruptedException e) {
-					log.error(e);
+					log.error(e.getMessage(), e);
 				}
 			}
 		}.start();
@@ -138,7 +114,7 @@ public class ModuleMetricsHandler extends AbstractModuleMetricsHandler {
 
 			}
 		} catch (JMException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
 		}
 	}
 
@@ -149,10 +125,9 @@ public class ModuleMetricsHandler extends AbstractModuleMetricsHandler {
 			}
 
 			JMXServiceURL url = new JMXServiceURL(moduleMetricsJmxUrl);
-			JMXConnector jmxc = JMXConnectorFactory.connect(url, null);
-			connection = jmxc.getMBeanServerConnection();
+			connection = JMXConnectorFactory.connect(url, null).getMBeanServerConnection();
 		} catch (IOException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
 		}
 		return connection;
 	}

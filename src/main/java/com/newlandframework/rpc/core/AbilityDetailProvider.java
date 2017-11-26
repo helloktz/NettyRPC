@@ -1,25 +1,23 @@
 package com.newlandframework.rpc.core;
 
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import com.newlandframework.rpc.netty.MessageRecvExecutor;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class AbilityDetailProvider implements AbilityDetail {
-	private final static String STYLE = "<style type=\"text/css\">\n" + "table.gridtable {\n" + "    font-family: verdana,arial,sans-serif;\n" + "    font-size:11px;\n" + "    color:#333333;\n"
+	private static final String STYLE = "<style type=\"text/css\">\n" + "table.gridtable {\n" + "    font-family: verdana,arial,sans-serif;\n" + "    font-size:11px;\n" + "    color:#333333;\n"
 			+ "    border-width: 1px;\n" + "    border-color: #666666;\n" + "    border-collapse: collapse;\n" + "}\n" + "table.gridtable th {\n" + "    border-width: 1px;\n" + "    padding: 8px;\n"
 			+ "    border-style: solid;\n" + "    border-color: #666666;\n" + "    background-color: #dedede;\n" + "}\n" + "table.gridtable td {\n" + "    border-width: 1px;\n" + "    padding: 8px;\n"
 			+ "    border-style: solid;\n" + "    border-color: #666666;\n" + "    background-color: #ffffff;\n" + "}\n" + "</style>";
 
-	private final static String HEADER = "<table class=\"gridtable\">\n" + "<tr>\n" + "    <th>NettyRPC Ability Detail</th>\n" + "</tr>";
+	private static final String HEADER = "<table class=\"gridtable\">\n" + "<tr>\n" + "    <th>NettyRPC Ability Detail</th>\n" + "</tr>";
 
-	private final static String TAIL = "</table>";
-	private final static String CELL_BEGIN = "<tr><td>";
-	private final static String CELL_END = "</td></tr>";
+	private static final String TAIL = "</table>";
+	private static final String CELL_BEGIN = "<tr><td>";
+	private static final String CELL_END = "</td></tr>";
 
 	@Override
 	public StringBuilder listAbilityDetail(boolean html) {
@@ -31,11 +29,7 @@ public class AbilityDetailProvider implements AbilityDetail {
 			utils.getProvider().append(STYLE).append(HEADER);
 		}
 
-		Set<String> s = map.keySet();
-		Iterator<String> iter = s.iterator();
-		String key;
-		while (iter.hasNext()) {
-			key = iter.next();
+		map.keySet().stream().forEach(key -> {
 			try {
 				if (html) {
 					utils.getProvider().append(CELL_BEGIN);
@@ -46,9 +40,9 @@ public class AbilityDetailProvider implements AbilityDetail {
 				}
 
 			} catch (ClassNotFoundException e) {
-				log.error(e);
+				log.error(e.getMessage(), e);
 			}
-		}
+		});
 
 		if (html) {
 			utils.getProvider().append(TAIL);

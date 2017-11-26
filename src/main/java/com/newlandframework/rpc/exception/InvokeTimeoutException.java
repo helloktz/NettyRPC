@@ -1,7 +1,7 @@
 package com.newlandframework.rpc.exception;
 
+@SuppressWarnings("serial")
 public class InvokeTimeoutException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
 
 	public InvokeTimeoutException() {
 		super();

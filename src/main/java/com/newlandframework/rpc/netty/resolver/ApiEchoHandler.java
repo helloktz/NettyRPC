@@ -15,9 +15,9 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class ApiEchoHandler extends ChannelInboundHandlerAdapter {
 	private static final String CONTENT_TYPE = "Content-Type";
 	private static final String CONTENT_LENGTH = "Content-Length";
@@ -27,6 +27,7 @@ public class ApiEchoHandler extends ChannelInboundHandlerAdapter {
 	private static final String METRICS_ERR_MSG = "NettyRPC nettyrpc.jmx.invoke.metrics attribute is closed!";
 
 	public ApiEchoHandler() {
+		super();
 	}
 
 	@Override
@@ -49,18 +50,18 @@ public class ApiEchoHandler extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		log.error(cause);
+		log.error(cause.getMessage(), cause);
 		ctx.close();
 	}
 
 	private byte[] buildResponseMsg(HttpRequest req) {
 		byte[] content = null;
-		boolean metrics = (req.getUri().indexOf(METRICS) != -1);
+		boolean metrics = (req.uri().indexOf(METRICS) != -1);
 		if (SYSTEM_PROPERTY_JMX_METRICS_SUPPORT && metrics) {
 			try {
 				content = ModuleMetricsProcessor.getInstance().buildModuleMetrics().getBytes("GBK");
 			} catch (UnsupportedEncodingException e) {
-				log.error(e);
+				log.error(e.getMessage(), e);
 			}
 		} else if (!SYSTEM_PROPERTY_JMX_METRICS_SUPPORT && metrics) {
 			content = METRICS_ERR_MSG.getBytes();

@@ -9,9 +9,13 @@ import com.dyuproject.protostuff.runtime.RuntimeSchema;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 public class SchemaCache {
-	private static class SchemaCacheHolder {
-		private static SchemaCache cache = new SchemaCache();
+	@NoArgsConstructor(access = AccessLevel.PRIVATE)
+	private static final class SchemaCacheHolder {
+		private static final SchemaCache cache = new SchemaCache();
 	}
 
 	public static SchemaCache getInstance() {

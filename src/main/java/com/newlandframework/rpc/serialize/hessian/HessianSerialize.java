@@ -9,9 +9,9 @@ import com.caucho.hessian.io.Hessian2Output;
 import com.newlandframework.rpc.serialize.RpcSerialize;
 
 import lombok.Cleanup;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class HessianSerialize implements RpcSerialize {
 
 	@Override
@@ -23,7 +23,7 @@ public class HessianSerialize implements RpcSerialize {
 			ho.writeObject(object);
 			ho.completeMessage();
 		} catch (IOException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
 		}
 	}
 
@@ -37,7 +37,7 @@ public class HessianSerialize implements RpcSerialize {
 			result = hi.readObject();
 			hi.completeMessage();
 		} catch (IOException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
 		}
 		return result;
 	}

@@ -1,8 +1,8 @@
 package com.newlandframework.rpc.parallel;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class SemaphoreWrapperFactory extends SemaphoreWrapper {
 	private static final SemaphoreWrapperFactory INSTANCE = new SemaphoreWrapperFactory();
 
@@ -26,14 +26,15 @@ public class SemaphoreWrapperFactory extends SemaphoreWrapper {
 					}
 				}
 			} catch (InterruptedException e) {
-				log.error(e);
+				log.error(e.getMessage(), e);
+				Thread.currentThread().interrupt();
 			}
 		}
 	}
 
 	@Override
 	public void release() {
-		if (semaphore != null) {
+		if (semaphore != null)
 			while (true) {
 				boolean result = released.get();
 				if (released.compareAndSet(result, false)) {
@@ -41,6 +42,5 @@ public class SemaphoreWrapperFactory extends SemaphoreWrapper {
 					break;
 				}
 			}
-		}
 	}
 }

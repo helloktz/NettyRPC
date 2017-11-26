@@ -5,9 +5,9 @@ import java.util.concurrent.CountDownLatch;
 import com.newlandframework.rpc.exception.InvokeTimeoutException;
 import com.newlandframework.rpc.services.MultiCalculate;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class MultiCalcParallelRequestThread implements Runnable {
 
 	private CountDownLatch signal;
@@ -28,8 +28,11 @@ public class MultiCalcParallelRequestThread implements Runnable {
 			signal.await();
 			int multi = calc.multi(taskNumber, taskNumber);
 			System.out.println("calc multi result:[" + multi + "]");
-		} catch (InterruptedException | InvokeTimeoutException ex) {
-			log.error(ex);
+		} catch (InterruptedException ie) {
+			log.error(ie.getMessage(), ie);
+			Thread.currentThread().interrupt();
+		} catch (InvokeTimeoutException ite) {
+			log.error(ite.getMessage(), ite);
 		} finally {
 			finish.countDown();
 		}

@@ -1,17 +1,29 @@
 package com.newlandframework.rpc.compiler.weaver;
 
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Sets;
+
+import lombok.SneakyThrows;
+
+/**
+ * 弱引用减少内存消耗
+ * 
+ * @author helloktz
+ *
+ */
 public class ClassCache {
-	// FIXME: 2017/8/30 by tangjie
-	// 引入弱引用节省内存消耗，JVM每次gc的时候，自动释放内存
-	private final Map<ClassLoader, Map<Set<Class<?>>, WeakReference<Class<?>>>> loader = new HashMap<ClassLoader, Map<Set<Class<?>>, WeakReference<Class<?>>>>();
+	private final LoadingCache<ClassLoader, Cache<Set<Class<?>>, Class<?>>> loader = CacheBuilder.newBuilder().build(new CacheLoader<ClassLoader, Cache<Set<Class<?>>, Class<?>>>() {
+		@Override
+		public Cache<Set<Class<?>>, Class<?>> load(ClassLoader key) throws Exception {
+			return CacheBuilder.newBuilder().weakValues().initialCapacity(512).build();
+		}
+
+	});
 
 	private final Transformer transformer;
 
@@ -19,36 +31,15 @@ public class ClassCache {
 		this.transformer = transformer;
 	}
 
-	private Map<Set<Class<?>>, WeakReference<Class<?>>> getClassCache(ClassLoader classLoader) {
-		Map<Set<Class<?>>, WeakReference<Class<?>>> cache = loader.get(classLoader);
-		if (cache == null) {
-			cache = new HashMap<Set<Class<?>>, WeakReference<Class<?>>>(512);
-			loader.put(classLoader, cache);
-		}
-
-		return cache;
+	private Cache<Set<Class<?>>, Class<?>> getClassCache(ClassLoader classLoader) {
+		return loader.getUnchecked(classLoader);
 	}
 
-	private Set<Class<?>> toClassCacheKey(Class<?>[] proxyClasses) {
-		return new HashSet<Class<?>>(Arrays.asList(proxyClasses));
-	}
-
-	public synchronized Class<?> getProxyClass(ClassLoader classLoader, Class<?>[] proxyClasses) {
-		Map<Set<Class<?>>, WeakReference<Class<?>>> classCache = getClassCache(classLoader);
-		Set<Class<?>> key = toClassCacheKey(proxyClasses);
-		Class<?> proxyClass;
-		Reference<Class<?>> proxyClassReference = classCache.get(key);
-
-		if (proxyClassReference == null) {
-			proxyClass = transformer.transform(classLoader, proxyClasses);
-			classCache.put(key, new WeakReference<Class<?>>(proxyClass));
-		} else {
-			proxyClass = proxyClassReference.get();
-			if (proxyClass == null) {
-				proxyClass = transformer.transform(classLoader, proxyClasses);
-				classCache.put(key, new WeakReference<Class<?>>(proxyClass));
-			}
-		}
+	@SneakyThrows
+	public Class<?> getProxyClass(ClassLoader classLoader, Class<?>[] proxyClasses) {
+		Cache<Set<Class<?>>, Class<?>> classCache = getClassCache(classLoader);
+		Set<Class<?>> key = Sets.newHashSet(proxyClasses);
+		Class<?> proxyClass = classCache.get(key, () -> transformer.transform(classLoader, proxyClasses));
 
 		return proxyClass;
 	}

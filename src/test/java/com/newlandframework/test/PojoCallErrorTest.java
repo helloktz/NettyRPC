@@ -1,22 +1,41 @@
 package com.newlandframework.test;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.annotation.Resource;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.exception.InvokeModuleException;
 import com.newlandframework.rpc.services.PersonManage;
 import com.newlandframework.rpc.services.pojo.Person;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RunWith(SpringRunner.class)
+@ContextConfiguration("classpath:rpc-invoke-config-client.xml")
 public class PojoCallErrorTest {
-	public static void test1(PersonManage manage) {
+
+	@Resource(name = "personManage")
+	private PersonManage manage;
+
+	@Test
+	public void testPojoCallError() {
+		test1(manage);
+		test2(manage);
+	}
+
+	public void test1(PersonManage manage) {
 		try {
 			manage.check();
 		} catch (InvokeModuleException e) {
-			// log.error(e);
-			System.out.println(e.getMessage());
+			log.error(e.getMessage(), e);
 		}
 	}
 
-	public static void test2(PersonManage manage) {
+	public void test2(PersonManage manage) {
 		try {
 			Person p = new Person();
 			p.setId(20150811);
@@ -24,21 +43,7 @@ public class PojoCallErrorTest {
 			p.setAge(1);
 			manage.checkAge(p);
 		} catch (InvokeModuleException e) {
-			// log.error(e);
-			System.out.println(e.getMessage());
-		}
-	}
-
-	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-client.xml");
-
-		PersonManage manage = (PersonManage) context.getBean("personManage");
-
-		try {
-			test1(manage);
-			test2(manage);
-		} finally {
-			context.destroy();
+			log.error(e.getMessage(), e);
 		}
 	}
 }

@@ -1,10 +1,11 @@
 package com.newlandframework.rpc.netty;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.commons.lang3.BooleanUtils;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -20,13 +21,11 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RpcServerLoader {
-
-	private static volatile RpcServerLoader rpcServerLoader;
 	private static final String DELIMITER = RpcSystemConfig.DELIMITER;
 	@Setter
 	private RpcSerializeProtocol serializeProtocol = RpcSerializeProtocol.JDKSERIALIZE;
@@ -34,21 +33,19 @@ public class RpcServerLoader {
 	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(PARALLEL);
 	private static int threadNums = RpcSystemConfig.SYSTEM_PROPERTY_THREADPOOL_THREAD_NUMS;
 	private static int queueNums = RpcSystemConfig.SYSTEM_PROPERTY_THREADPOOL_QUEUE_NUMS;
-	private static ListeningExecutorService threadPoolExecutor = MoreExecutors.listeningDecorator((ThreadPoolExecutor) RpcThreadPool.getExecutor(threadNums, queueNums));
+	private static ListeningExecutorService threadPoolExecutor = MoreExecutors.listeningDecorator(RpcThreadPool.getExecutor(threadNums, queueNums));
 	private MessageSendHandler messageSendHandler = null;
 	private Lock lock = new ReentrantLock();
 	private Condition connectStatus = lock.newCondition();
 	private Condition handlerStatus = lock.newCondition();
 
+	@NoArgsConstructor(access = AccessLevel.PRIVATE)
+	private static final class RpcServerLoaderHolder {
+		private static final RpcServerLoader INSTANCE = new RpcServerLoader();
+	}
+
 	public static RpcServerLoader getInstance() {
-		if (rpcServerLoader == null) {
-			synchronized (RpcServerLoader.class) {
-				if (rpcServerLoader == null) {
-					rpcServerLoader = new RpcServerLoader();
-				}
-			}
-		}
-		return rpcServerLoader;
+		return RpcServerLoaderHolder.INSTANCE;
 	}
 
 	public void load(String serverAddress, RpcSerializeProtocol serializeProtocol) {
@@ -58,7 +55,10 @@ public class RpcServerLoader {
 			int port = Integer.parseInt(ipAddr[1]);
 			final InetSocketAddress remoteAddr = new InetSocketAddress(host, port);
 
-			System.out.printf("[author tangjie] Netty RPC Client start success!\nip:%s\nport:%d\nprotocol:%s\n\n", host, port, serializeProtocol);
+			log.info("Netty RPC Client start success!");
+			log.info("ip:{}", host);
+			log.info("port:{}", port);
+			log.info("protocol:{}", serializeProtocol);
 
 			ListenableFuture<Boolean> listenableFuture = threadPoolExecutor.submit(new MessageSendInitializeTask(eventLoopGroup, remoteAddr, serializeProtocol));
 
@@ -68,15 +68,15 @@ public class RpcServerLoader {
 					try {
 						lock.lock();
 
-						if (messageSendHandler == null) {
+						if (messageSendHandler == null)
 							handlerStatus.await();
-						}
 
-						if (result.equals(Boolean.TRUE) && messageSendHandler != null) {
+						if (BooleanUtils.isTrue(result) && messageSendHandler != null)
 							connectStatus.signalAll();
-						}
+
 					} catch (InterruptedException ex) {
-						log.error(ex);
+						log.error(ex.getMessage(), ex);
+						Thread.currentThread().interrupt();
 					} finally {
 						lock.unlock();
 					}
@@ -84,7 +84,7 @@ public class RpcServerLoader {
 
 				@Override
 				public void onFailure(Throwable t) {
-					log.error(t);
+					log.error(t.getMessage(), t);
 				}
 			}, threadPoolExecutor);
 		}
@@ -103,9 +103,9 @@ public class RpcServerLoader {
 	public MessageSendHandler getMessageSendHandler() throws InterruptedException {
 		try {
 			lock.lock();
-			if (messageSendHandler == null) {
+			if (messageSendHandler == null)
 				connectStatus.await();
-			}
+
 			return messageSendHandler;
 		} finally {
 			lock.unlock();
@@ -113,7 +113,9 @@ public class RpcServerLoader {
 	}
 
 	public void unLoad() {
-		messageSendHandler.close();
+		if (messageSendHandler != null)
+			messageSendHandler.close();
+
 		threadPoolExecutor.shutdown();
 		eventLoopGroup.shutdownGracefully();
 	}

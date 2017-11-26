@@ -1,7 +1,7 @@
 package com.newlandframework.rpc.exception;
 
+@SuppressWarnings("serial")
 public class CreateProxyException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
 
 	public CreateProxyException() {
 		super();

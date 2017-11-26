@@ -2,7 +2,6 @@ package com.newlandframework.rpc.compiler;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
@@ -11,9 +10,9 @@ import com.google.common.io.Files;
 import com.newlandframework.rpc.compiler.intercept.SimpleMethodInterceptor;
 import com.newlandframework.rpc.core.ReflectionUtils;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class AccessAdaptiveProvider extends AbstractAccessAdaptive implements AccessAdaptive {
 
 	@Override
@@ -32,10 +31,10 @@ public class AccessAdaptiveProvider extends AbstractAccessAdaptive implements Ac
 				Class<?> type = compile(javaSource, Thread.currentThread().getContextClassLoader());
 				Object object = ReflectionUtils.newInstance(type);
 				Thread.currentThread().getContextClassLoader().loadClass(type.getName());
-				Object proxy = getFactory().createProxy(object, new SimpleMethodInterceptor(), new Class[] { type });
+				Object proxy = getFactory().createProxy(object, new SimpleMethodInterceptor(), type);
 				return MethodUtils.invokeMethod(proxy, method, args);
-			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
-				log.error(e);
+			} catch (ReflectiveOperationException e) {
+				log.error(e.getMessage(), e);
 			}
 		}
 		return null;

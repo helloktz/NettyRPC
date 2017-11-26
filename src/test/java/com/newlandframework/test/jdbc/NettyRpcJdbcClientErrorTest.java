@@ -1,22 +1,29 @@
 package com.newlandframework.test.jdbc;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.annotation.Resource;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.exception.InvokeModuleException;
 import com.newlandframework.rpc.services.JdbcPersonManage;
 import com.newlandframework.rpc.services.pojo.Person;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
+@RunWith(SpringRunner.class)
+@ContextConfiguration("classpath:rpc-invoke-config-jdbc-client.xml")
 public class NettyRpcJdbcClientErrorTest {
-	// FIXME: 2017/9/25
+
+	@Resource(name = "personManageJdbc")
+	private JdbcPersonManage manage;
+
 	// 确保先启动NettyRPC服务端应用:NettyRpcJdbcServerTest，再运行NettyRpcJdbcClientTest、NettyRpcJdbcClientErrorTest！
-	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-jdbc-client.xml");
-
-		JdbcPersonManage manage = (JdbcPersonManage) context.getBean("personManageJdbc");
-
+	@Test
+	public void testNettyRpcJdbcClientError() {
 		// 验证RPC调用服务端执行失败的情况！
 		Person p = new Person();
 		p.setId(20150811);
@@ -25,12 +32,9 @@ public class NettyRpcJdbcClientErrorTest {
 
 		try {
 			int result = manage.save(p);
-			System.out.println("call pojo rpc result:" + result);
+			log.info("call pojo rpc result:{}", result);
 		} catch (InvokeModuleException e) {
-			log.error(e);
-			System.out.println(e.getMessage());
-		} finally {
-			context.destroy();
+			log.error(e.getMessage(), e);
 		}
 	}
 }

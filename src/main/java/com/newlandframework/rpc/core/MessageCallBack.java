@@ -11,11 +11,12 @@ import com.newlandframework.rpc.exception.RejectResponeException;
 import com.newlandframework.rpc.model.MessageRequest;
 import com.newlandframework.rpc.model.MessageResponse;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class MessageCallBack {
 
+	@SuppressWarnings("unused")
 	private MessageRequest request;
 	private MessageResponse response;
 	private Lock lock = new ReentrantLock();
@@ -63,7 +64,8 @@ public class MessageCallBack {
 		try {
 			timeout = finish.await(RpcSystemConfig.SYSTEM_PROPERTY_MESSAGE_CALLBACK_TIMEOUT, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
+			Thread.currentThread().interrupt();
 		}
 		if (!timeout) {
 			throw new InvokeTimeoutException(RpcSystemConfig.TIMEOUT_RESPONSE_MSG);

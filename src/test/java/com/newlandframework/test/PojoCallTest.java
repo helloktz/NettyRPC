@@ -1,15 +1,27 @@
 package com.newlandframework.test;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.annotation.Resource;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.services.PersonManage;
 import com.newlandframework.rpc.services.pojo.Person;
 
-public class PojoCallTest {
-	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-client.xml");
+import lombok.extern.slf4j.Slf4j;
 
-		PersonManage manage = (PersonManage) context.getBean("personManage");
+@Slf4j
+@RunWith(SpringRunner.class)
+@ContextConfiguration("classpath:rpc-invoke-config-client.xml")
+public class PojoCallTest {
+
+	@Resource(name = "personManage")
+	private PersonManage manage;
+
+	@Test
+	public void testPojoCall() {
 
 		Person p = new Person();
 		p.setId(20150811);
@@ -20,8 +32,6 @@ public class PojoCallTest {
 
 		manage.query(p);
 
-		System.out.println("call pojo rpc result:" + result);
-
-		context.destroy();
+		log.info("call pojo rpc result:", result);
 	}
 }

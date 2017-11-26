@@ -6,14 +6,14 @@ import java.util.concurrent.Semaphore;
 
 import com.newlandframework.rpc.core.RpcSystemConfig;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class HashCriticalSection {
 	private static Integer partition = RpcSystemConfig.SYSTEM_PROPERTY_JMX_METRICS_HASH_NUMS;
-	private final Map<Integer, Semaphore> criticalSectionMap = new ConcurrentHashMap<Integer, Semaphore>();
-	public final static long BASIC = 0xcbf29ce484222325L;
-	public final static long PRIME = 0x100000001b3L;
+	private final Map<Integer, Semaphore> criticalSectionMap = new ConcurrentHashMap<>();
+	public static final long BASIC = 0xcbf29ce484222325L;
+	public static final long PRIME = 0x100000001b3L;
 
 	public HashCriticalSection() {
 		boolean fair = RpcSystemConfig.SYSTEM_PROPERTY_JMX_METRICS_LOCK_FAIR == 1;
@@ -59,7 +59,8 @@ public class HashCriticalSection {
 		try {
 			semaphore.acquire();
 		} catch (InterruptedException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
+			Thread.currentThread().interrupt();
 		}
 	}
 
@@ -74,7 +75,8 @@ public class HashCriticalSection {
 		try {
 			semaphore.acquire();
 		} catch (InterruptedException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
+			Thread.currentThread().interrupt();
 		}
 	}
 

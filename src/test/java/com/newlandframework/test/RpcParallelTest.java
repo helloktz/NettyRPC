@@ -3,15 +3,44 @@ package com.newlandframework.test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Resource;
+
 import org.apache.commons.lang3.time.StopWatch;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.services.AddCalculate;
 import com.newlandframework.rpc.services.MultiCalculate;
 
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RunWith(SpringRunner.class)
+@ContextConfiguration("classpath:rpc-invoke-config-client.xml")
 public class RpcParallelTest {
 
-	public static void parallelAddCalcTask(AddCalculate calc, int parallel) throws InterruptedException {
+	@Resource(name = "addCalc")
+	private AddCalculate addCalculate;
+	@Resource(name = "multiCalc")
+	private MultiCalculate multiCalculate;
+
+	@Test
+	@SneakyThrows
+	public void testRpcParallel() {
+		// 并行度1000
+		int parallel = 1000;
+
+		for (int i = 0; i < 1; i++) {
+			addTask(addCalculate, parallel);
+			multiTask(multiCalculate, parallel);
+			log.info("Netty RPC Server 消息协议序列化第[{}]轮并发验证结束!", i);
+		}
+	}
+
+	public void parallelAddCalcTask(AddCalculate calc, int parallel) throws InterruptedException {
 		// 开始计时
 		StopWatch sw = new StopWatch();
 		sw.start();
@@ -27,12 +56,10 @@ public class RpcParallelTest {
 		signal.countDown();
 		finish.await();
 		sw.stop();
-
-		String tip = String.format("加法计算RPC调用总共耗时: [%s] 毫秒", sw.getTime());
-		System.out.println(tip);
+		log.info("加法计算RPC调用总共耗时: [{}] 毫秒", sw.getTime());
 	}
 
-	public static void parallelMultiCalcTask(MultiCalculate calc, int parallel) throws InterruptedException {
+	public void parallelMultiCalcTask(MultiCalculate calc, int parallel) throws InterruptedException {
 		// 开始计时
 		StopWatch sw = new StopWatch();
 		sw.start();
@@ -48,32 +75,16 @@ public class RpcParallelTest {
 		signal.countDown();
 		finish.await();
 		sw.stop();
-
-		String tip = String.format("乘法计算RPC调用总共耗时: [%s] 毫秒", sw.getTime());
-		System.out.println(tip);
+		log.info("乘法计算RPC调用总共耗时: [{}] 毫秒", sw.getTime());
 	}
 
-	public static void addTask(AddCalculate calc, int parallel) throws InterruptedException {
-		RpcParallelTest.parallelAddCalcTask(calc, parallel);
+	public void addTask(AddCalculate calc, int parallel) throws InterruptedException {
+		parallelAddCalcTask(calc, parallel);
 		TimeUnit.MILLISECONDS.sleep(30);
 	}
 
-	public static void multiTask(MultiCalculate calc, int parallel) throws InterruptedException {
-		RpcParallelTest.parallelMultiCalcTask(calc, parallel);
+	public void multiTask(MultiCalculate calc, int parallel) throws InterruptedException {
+		parallelMultiCalcTask(calc, parallel);
 		TimeUnit.MILLISECONDS.sleep(30);
-	}
-
-	public static void main(String[] args) throws Exception {
-		// 并行度1000
-		int parallel = 1000;
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-client.xml");
-
-		for (int i = 0; i < 1; i++) {
-			addTask((AddCalculate) context.getBean("addCalc"), parallel);
-			multiTask((MultiCalculate) context.getBean("multiCalc"), parallel);
-			System.out.printf("[author tangjie] Netty RPC Server 消息协议序列化第[%d]轮并发验证结束!\n\n", i);
-		}
-
-		context.destroy();
 	}
 }

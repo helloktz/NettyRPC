@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class SemaphoreWrapper {
 	protected final AtomicBoolean released = new AtomicBoolean(false);
 	@Getter
@@ -31,11 +31,8 @@ public class SemaphoreWrapper {
 	}
 
 	public void release() {
-		if (this.semaphore != null) {
-			if (this.released.compareAndSet(false, true)) {
-				this.semaphore.release();
-			}
-		}
+		if (semaphore != null && released.compareAndSet(false, true))
+			semaphore.release();
 	}
 
 	public void acquire() {
@@ -43,7 +40,8 @@ public class SemaphoreWrapper {
 			try {
 				semaphore.acquire();
 			} catch (InterruptedException e) {
-				log.error(e);
+				log.error(e.getMessage(), e);
+				Thread.currentThread().interrupt();
 			}
 		}
 	}

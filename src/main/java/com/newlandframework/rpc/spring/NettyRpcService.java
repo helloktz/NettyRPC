@@ -1,7 +1,6 @@
 package com.newlandframework.rpc.spring;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEvent;
@@ -43,7 +42,7 @@ public class NettyRpcService implements ApplicationContextAware, ApplicationList
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+	public void setApplicationContext(ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 		applicationContext.publishEvent(new ServerStartEvent(new Object()));
 	}

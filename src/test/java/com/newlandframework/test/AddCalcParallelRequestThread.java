@@ -5,9 +5,9 @@ import java.util.concurrent.CountDownLatch;
 import com.newlandframework.rpc.exception.InvokeTimeoutException;
 import com.newlandframework.rpc.services.AddCalculate;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class AddCalcParallelRequestThread implements Runnable {
 
 	private CountDownLatch signal;
@@ -27,9 +27,9 @@ public class AddCalcParallelRequestThread implements Runnable {
 		try {
 			signal.await();
 			int add = calc.add(taskNumber, taskNumber);
-			System.out.println("calc add result:[" + add + "]");
+			log.info("calc add result:[{}]", add);
 		} catch (InterruptedException | InvokeTimeoutException ex) {
-			log.error(ex);
+			log.error(ex.getMessage(), ex);
 		} finally {
 			finish.countDown();
 		}

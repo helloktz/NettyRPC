@@ -12,9 +12,9 @@ import com.newlandframework.rpc.serialize.RpcSerializeProtocol;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class NettyRpcReference implements FactoryBean<Object>, InitializingBean, DisposableBean {
 	@Getter
 	@Setter
@@ -51,7 +51,7 @@ public class NettyRpcReference implements FactoryBean<Object>, InitializingBean,
 		try {
 			return this.getClass().getClassLoader().loadClass(interfaceName);
 		} catch (ClassNotFoundException e) {
-			log.error("spring analyze fail!", e);
+			log.error("Spring analyze fail!", e);
 		}
 		return null;
 	}

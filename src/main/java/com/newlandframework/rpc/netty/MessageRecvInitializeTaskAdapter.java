@@ -12,31 +12,31 @@ public class MessageRecvInitializeTaskAdapter extends AbstractMessageRecvInitial
 
 	@Override
 	protected void injectInvoke() {
-
+		//default adapter
 	}
 
 	@Override
 	protected void injectSuccInvoke(long invokeTimespan) {
-
+		//default adapter
 	}
 
 	@Override
 	protected void injectFailInvoke(Throwable error) {
-
+		//default adapter
 	}
 
 	@Override
 	protected void injectFilterInvoke() {
-
+		//default adapter
 	}
 
 	@Override
 	protected void acquire() {
-
+		//default adapter
 	}
 
 	@Override
 	protected void release() {
-
+		//default adapter
 	}
 }

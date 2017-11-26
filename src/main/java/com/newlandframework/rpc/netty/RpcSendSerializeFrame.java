@@ -25,25 +25,22 @@ public class RpcSendSerializeFrame implements RpcSerializeFrame {
 	@Override
 	public void select(RpcSerializeProtocol protocol, ChannelPipeline pipeline) {
 		switch (protocol) {
-		case JDKSERIALIZE: {
-			handler.getInstance(JdkNativeSendHandler.class).handle(pipeline);
+		case JDKSERIALIZE:
+			addHandlersToPipeline(JdkNativeSendHandler.class, pipeline);
+			break;
+		case KRYOSERIALIZE:
+			addHandlersToPipeline(KryoSendHandler.class, pipeline);
+			break;
+		case HESSIANSERIALIZE:
+			addHandlersToPipeline(HessianSendHandler.class, pipeline);
+			break;
+		case PROTOSTUFFSERIALIZE:
+			addHandlersToPipeline(ProtostuffSendHandler.class, pipeline);
 			break;
 		}
-		case KRYOSERIALIZE: {
-			handler.getInstance(KryoSendHandler.class).handle(pipeline);
-			break;
-		}
-		case HESSIANSERIALIZE: {
-			handler.getInstance(HessianSendHandler.class).handle(pipeline);
-			break;
-		}
-		case PROTOSTUFFSERIALIZE: {
-			handler.getInstance(ProtostuffSendHandler.class).handle(pipeline);
-			break;
-		}
-		default: {
-			break;
-		}
-		}
+	}
+
+	private void addHandlersToPipeline(Class<? extends NettyRpcSendHandler> handlerType, ChannelPipeline pipeline) {
+		handler.getInstance(handlerType).handle(pipeline);
 	}
 }

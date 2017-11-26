@@ -15,8 +15,8 @@ public abstract class AbstractClassTransformer implements Transformer {
 	}
 
 	protected Method[] findImplementationMethods(Class<?>[] proxyClasses) {
-		Map<MethodDescriptor, Method> descriptorMap = new HashMap<MethodDescriptor, Method>(1024);
-		Set<MethodDescriptor> finalSet = new HashSet<MethodDescriptor>();
+		Map<MethodDescriptor, Method> descriptorMap = new HashMap<>(1024);
+		Set<MethodDescriptor> finalSet = new HashSet<>();
 
 		for (int i = 0; i < proxyClasses.length; i++) {
 			Class<?> proxyInterface = proxyClasses[i];

@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.JMException;
 
-import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.iterators.FilterIterator;
 
 import com.newlandframework.rpc.core.ReflectionUtils;
@@ -19,13 +18,13 @@ import com.newlandframework.rpc.model.MessageRequest;
 import com.newlandframework.rpc.model.MessageResponse;
 import com.newlandframework.rpc.parallel.HashCriticalSection;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class HashMessageRecvInitializeTask extends AbstractMessageRecvInitializeTask {
 	private int hashKey = 0;
 	private static HashCriticalSection criticalSection = new HashCriticalSection();
-	private AtomicReference<ModuleMetricsVisitor> visitor = new AtomicReference<ModuleMetricsVisitor>();
+	private AtomicReference<ModuleMetricsVisitor> visitor = new AtomicReference<>();
 
 	public HashMessageRecvInitializeTask(MessageRequest request, MessageResponse response, Map<String, Object> handlerMap) {
 		super(request, response, handlerMap);
@@ -85,13 +84,11 @@ public class HashMessageRecvInitializeTask extends AbstractMessageRecvInitialize
 		int index = 0;
 		int size = HashModuleMetricsVisitor.getInstance().getHashModuleMetricsVisitorListSize();
 		breakFor: for (index = 0; index < size; index++) {
-			Iterator iterator = new FilterIterator(HashModuleMetricsVisitor.getInstance().getHashVisitorList().get(index).iterator(), new Predicate() {
-				@Override
-				public boolean evaluate(Object object) {
-					String statModuleName = ((ModuleMetricsVisitor) object).getModuleName();
-					String statMethodName = ((ModuleMetricsVisitor) object).getMethodName();
-					return statModuleName.compareTo(request.getClassName()) == 0 && statMethodName.compareTo(signatureMethod) == 0;
-				}
+			Iterator iterator = new FilterIterator(HashModuleMetricsVisitor.getInstance().getHashVisitorList().get(index).iterator(), object -> {
+				String statModuleName = ((ModuleMetricsVisitor) object).getModuleName();
+				String statMethodName = ((ModuleMetricsVisitor) object).getMethodName();
+				return statModuleName.compareTo(request.getClassName()) == 0 && statMethodName.compareTo(signatureMethod) == 0;
+
 			});
 
 			while (iterator.hasNext()) {
@@ -125,7 +122,7 @@ public class HashMessageRecvInitializeTask extends AbstractMessageRecvInitialize
 		try {
 			visitor.buildErrorCompositeData(error);
 		} catch (JMException e) {
-			log.error(e);
+			log.error(e.getMessage(), e);
 		}
 	}
 

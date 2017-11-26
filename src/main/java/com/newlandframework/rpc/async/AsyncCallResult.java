@@ -1,9 +1,11 @@
 package com.newlandframework.rpc.async;
 
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.collect.Maps;
 import com.newlandframework.rpc.core.ReflectionUtils;
 import com.newlandframework.rpc.core.RpcSystemConfig;
 import com.newlandframework.rpc.exception.AsyncCallException;
@@ -13,17 +15,19 @@ import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Enhancer;
 
 public class AsyncCallResult {
-	private Class returnClass;
-	private Future future;
+	private static final Map<String, Class<?>> PROXY_CACHE = Maps.newConcurrentMap();
+
+	private Class<?> returnClass;
+	private Future<?> future;
 	private Long timeout;
 
-	public AsyncCallResult(Class returnClass, Future future, Long timeout) {
+	public AsyncCallResult(Class<?> returnClass, Future<?> future, Long timeout) {
 		this.returnClass = returnClass;
 		this.future = future;
 		this.timeout = timeout;
 	}
 
-	public Object loadFuture() throws AsyncCallException {
+	public Object loadFuture() {
 		try {
 			if (timeout <= 0L) {
 				return future.get();
@@ -49,7 +53,7 @@ public class AsyncCallResult {
 	}
 
 	public Object getResult() {
-		Class proxyClass = AsyncProxyCache.get(returnClass.getName());
+		Class<?> proxyClass = PROXY_CACHE.get(returnClass.getName());
 		if (proxyClass == null) {
 			Enhancer enhancer = new Enhancer();
 			if (returnClass.isInterface()) {
@@ -61,7 +65,7 @@ public class AsyncCallResult {
 			enhancer.setCallbackFilter(new AsyncCallFilter());
 			enhancer.setCallbackTypes(new Class[] { AsyncCallResultInterceptor.class, AsyncCallObjectInterceptor.class });
 			proxyClass = enhancer.createClass();
-			AsyncProxyCache.save(returnClass.getName(), proxyClass);
+			PROXY_CACHE.putIfAbsent(returnClass.getName(), proxyClass);
 		}
 
 		Enhancer.registerCallbacks(proxyClass, new Callback[] { new AsyncCallResultInterceptor(this), new AsyncCallObjectInterceptor(future) });

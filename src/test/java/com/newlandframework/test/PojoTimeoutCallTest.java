@@ -1,17 +1,27 @@
 package com.newlandframework.test;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.annotation.Resource;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.newlandframework.rpc.exception.InvokeTimeoutException;
 import com.newlandframework.rpc.services.PersonManage;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RunWith(SpringRunner.class)
+@ContextConfiguration("classpath:rpc-invoke-config-client.xml")
 public class PojoTimeoutCallTest {
-	public static void main(String[] args) {
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:rpc-invoke-config-client.xml");
 
-		PersonManage manage = (PersonManage) context.getBean("personManage");
+	@Resource(name = "personManage")
+	private PersonManage manage;
 
-		// TODO: 2017/10/28 by tangjie
+	@Test
+	public void testPojoTimeoutCall() {
 		// NettyRPC default timeout is 30s.you can define it by
 		// nettyrpc.default.msg.timeout environment variable.
 		// if rpc call timeout,NettyRPC can throw InvokeTimeoutException.
@@ -19,10 +29,7 @@ public class PojoTimeoutCallTest {
 			long timeout = 32L;
 			manage.query(timeout);
 		} catch (InvokeTimeoutException e) {
-			// log.error(e);
-			System.out.println(e.getMessage());
-		} finally {
-			context.destroy();
+			log.error(e.getMessage(), e);
 		}
 	}
 }

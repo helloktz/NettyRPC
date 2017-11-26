@@ -3,7 +3,6 @@ package com.newlandframework.rpc.jmx;
 import java.beans.ConstructorProperties;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -18,6 +17,7 @@ import javax.management.openmbean.SimpleType;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.alibaba.druid.util.Histogram;
+import com.google.common.collect.ImmutableMap;
 import com.newlandframework.rpc.core.RpcSystemConfig;
 
 import lombok.EqualsAndHashCode;
@@ -29,8 +29,11 @@ import lombok.ToString;
 @ToString(of = { "moduleName", "methodName", "invokeCount", "invokeSuccCount", "invokeFilterCount", "invokeTimespan", "invokeMinTimespan", "invokeMaxTimespan", "invokeFailCount", "lastErrorTime", "lastStackTraceDetail" })
 public class ModuleMetricsVisitor {
 	public static final long DEFAULT_INVOKE_MIN_TIMESPAN = 3600 * 1000L;
-	private static final String[] THROWABLE_NAMES = { "message", "class", "stackTrace" };
-	private static final String[] THROWABLE_DESCRIPTIONS = { "message", "class", "stackTrace" };
+
+	private static final String CONSTANT_MESSAGE = "message";
+	private static final String CONSTANT_CLASS = "class";
+	private static final String CONSTANT_STACKTRACE = "stackTrace";
+	private static final String[] THROWABLE_NAMES = { "CONSTANT_MESSAGE", "CONSTANT_CLASS", "CONSTANT_STACKTRACE" };
 	private static final OpenType<?>[] THROWABLE_TYPES = new OpenType<?>[] { SimpleType.STRING, SimpleType.STRING, SimpleType.STRING };
 	private static CompositeType THROWABLE_COMPOSITE_TYPE = null;
 
@@ -60,8 +63,6 @@ public class ModuleMetricsVisitor {
 	@Setter
 	private long[] invokeHistogram;
 	@Getter
-	private Exception lastStackTrace;
-	@Getter
 	@Setter
 	private String lastStackTraceDetail;
 	private long lastErrorTime;
@@ -71,7 +72,7 @@ public class ModuleMetricsVisitor {
 
 	@Getter
 	@Setter
-	private Histogram histogram = new Histogram(TimeUnit.MILLISECONDS, new long[] { 1, 10, 100, 1000, 10 * 1000, 100 * 1000, 1000 * 1000 });
+	private Histogram histogram = new Histogram(TimeUnit.MILLISECONDS, 1, 10, 100, 1000, 10 * 1000, 100 * 1000, 1000 * 1000);
 
 	private final AtomicLongFieldUpdater<ModuleMetricsVisitor> invokeCountUpdater = AtomicLongFieldUpdater.newUpdater(ModuleMetricsVisitor.class, "invokeCount");
 	private final AtomicLongFieldUpdater<ModuleMetricsVisitor> invokeSuccCountUpdater = AtomicLongFieldUpdater.newUpdater(ModuleMetricsVisitor.class, "invokeSuccCount");
@@ -91,7 +92,6 @@ public class ModuleMetricsVisitor {
 		invokeMinTimespan = DEFAULT_INVOKE_MIN_TIMESPAN;
 		invokeMaxTimespan = 0L;
 		lastErrorTime = 0L;
-		lastStackTrace = null;
 		invokeCountUpdater.set(this, 0);
 		invokeSuccCountUpdater.set(this, 0);
 		invokeFailCountUpdater.set(this, 0);
@@ -122,30 +122,25 @@ public class ModuleMetricsVisitor {
 	}
 
 	public void setLastStackTrace(Exception lastStackTrace) {
-		this.lastStackTrace = lastStackTrace;
 		this.lastStackTraceDetail = lastStackTrace == null ? null : ExceptionUtils.getStackTrace(lastStackTrace);
 		this.lastErrorTime = System.currentTimeMillis();
 	}
 
 	public CompositeType getThrowableCompositeType() throws JMException {
-		if (THROWABLE_COMPOSITE_TYPE == null) {
-			THROWABLE_COMPOSITE_TYPE = new CompositeType("Throwable", "Throwable", THROWABLE_NAMES, THROWABLE_DESCRIPTIONS, THROWABLE_TYPES);
-		}
-
+		if (THROWABLE_COMPOSITE_TYPE == null)
+			THROWABLE_COMPOSITE_TYPE = new CompositeType("Throwable", "Throwable", THROWABLE_NAMES, THROWABLE_NAMES, THROWABLE_TYPES);
 		return THROWABLE_COMPOSITE_TYPE;
 	}
 
 	public CompositeData buildErrorCompositeData(Throwable error) throws JMException {
-		if (error == null) {
+		if (error == null) 
 			return null;
-		}
 
-		Map<String, Object> map = new HashMap<String, Object>(512);
-
-		map.put("class", error.getClass().getName());
-		map.put("message", error.getMessage());
-		map.put("stackTrace", ExceptionUtils.getStackTrace(error));
-
+		Map<String, Object> map = ImmutableMap.<String, Object>builder()
+				.put(CONSTANT_CLASS, error.getClass().getName())
+				.put(CONSTANT_MESSAGE, error.getMessage())
+				.put(CONSTANT_STACKTRACE, ExceptionUtils.getStackTrace(error))
+				.build();
 		return new CompositeDataSupport(getThrowableCompositeType(), map);
 	}
 

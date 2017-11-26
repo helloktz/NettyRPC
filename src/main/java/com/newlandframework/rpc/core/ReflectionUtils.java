@@ -1,29 +1,32 @@
 package com.newlandframework.rpc.core;
 
+import static java.util.stream.Collectors.toSet;
+
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.collect.ImmutableMap;
 import com.newlandframework.rpc.exception.CreateProxyException;
 
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class ReflectionUtils {
-	private static ImmutableMap.Builder<Class, Object> builder = ImmutableMap.builder();
+	private static ImmutableMap.Builder<Class<?>, Object> builder = ImmutableMap.builder();
 	@Getter
 	private StringBuilder provider = new StringBuilder();
 
@@ -51,26 +54,14 @@ public class ReflectionUtils {
 	}
 
 	public static Class<?>[] filterInterfaces(Class<?>[] proxyClasses) {
-		Set<Class<?>> interfaces = new HashSet<Class<?>>();
-		for (Class<?> proxyClass : proxyClasses) {
-			if (proxyClass.isInterface()) {
-				interfaces.add(proxyClass);
-			}
-		}
-
+		Set<Class<?>> interfaces = Arrays.stream(proxyClasses).filter(Class::isInterface).collect(toSet());
 		interfaces.add(Serializable.class);
 		return interfaces.toArray(new Class[interfaces.size()]);
 	}
 
 	public static Class<?>[] filterNonInterfaces(Class<?>[] proxyClasses) {
-		Set<Class<?>> superclasses = new HashSet<Class<?>>();
-		for (Class<?> proxyClass : proxyClasses) {
-			if (!proxyClass.isInterface()) {
-				superclasses.add(proxyClass);
-			}
-		}
-
-		return superclasses.toArray(new Class[superclasses.size()]);
+		Class<?>[] superclasses = Arrays.stream(proxyClasses).filter(c -> !c.isInterface()).toArray(Class<?>[]::new);
+		return superclasses;
 	}
 
 	public static boolean existDefaultConstructor(Class<?> superclass) {
@@ -78,9 +69,8 @@ public class ReflectionUtils {
 		for (int i = 0; i < declaredConstructors.length; i++) {
 			Constructor<?> constructor = declaredConstructors[i];
 			boolean exist = (constructor.getParameterTypes().length == 0 && (Modifier.isPublic(constructor.getModifiers()) || Modifier.isProtected(constructor.getModifiers())));
-			if (exist) {
+			if (exist)
 				return true;
-			}
 		}
 
 		return false;
@@ -124,16 +114,17 @@ public class ReflectionUtils {
 		return "equals".equals(method.getName()) && Boolean.TYPE.equals(method.getReturnType()) && method.getParameterTypes().length == 1 && Object.class.equals(method.getParameterTypes()[0]);
 	}
 
-	public static Object newInstance(Class type) {
-		Constructor constructor = null;
+	public static Object newInstance(Class<?> type) {
+		Constructor<?> constructor = null;
 		Object[] args = new Object[0];
 		try {
-			constructor = type.getConstructor(new Class[] {});
+			constructor = type.getConstructor(new Class<?>[] {});
 		} catch (NoSuchMethodException e) {
+			log.warn(e.getMessage(), e);
 		}
 
 		if (constructor == null) {
-			Constructor[] constructors = type.getConstructors();
+			Constructor<?>[] constructors = type.getConstructors();
 			if (constructors.length == 0) {
 				return null;
 			}
@@ -147,8 +138,8 @@ public class ReflectionUtils {
 
 		try {
 			return constructor.newInstance(args);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			log.error(e);
+		} catch (ReflectiveOperationException | IllegalArgumentException e) {
+			log.error(e.getMessage(), e);
 		}
 		return null;
 	}
@@ -180,9 +171,9 @@ public class ReflectionUtils {
 	}
 
 	private String getType(Class<?> t) {
-		String brackets = "";
+		StringBuilder brackets = new StringBuilder();
 		while (t.isArray()) {
-			brackets += "[]";
+			brackets.append("[]");
 			t = t.getComponentType();
 		}
 		return t.getName() + brackets;
@@ -243,50 +234,41 @@ public class ReflectionUtils {
 		}
 	}
 
-	public static Method getDeclaredMethod(final Class<?> cls, final String methodName, final Class<?>... parameterTypes) {
+	public static Method getDeclaredMethod(Class<?> cls, String methodName, Class<?>... parameterTypes) {
 		Method method = null;
 		try {
 			method = cls.getDeclaredMethod(methodName, parameterTypes);
 			return method;
 		} catch (NoSuchMethodException e) {
-			if (method == null) {
-				breakFor: for (Method m : cls.getDeclaredMethods()) {
-					if (m.getName().equals(methodName)) {
-						boolean find = true;
-						Class[] paramType = m.getParameterTypes();
-						if (paramType.length != parameterTypes.length) {
-							continue;
-						}
-						for (int i = 0; i < parameterTypes.length; i++) {
-							if (!paramType[i].isAssignableFrom(parameterTypes[i])) {
-								find = false;
-								break breakFor;
-							}
-						}
-						if (find) {
-							method = m;
-							break;
-						}
-					}
-				}
+			for (Method m : cls.getDeclaredMethods()) {
+				if (!m.getName().equals(methodName))
+					continue;
+
+				Class<?>[] paramType = m.getParameterTypes();
+				if (paramType.length != parameterTypes.length)
+					continue;
+
+				if (notMatches(paramType, parameterTypes))
+					break;
+
+				method = m;
+				break;
 			}
+
 		}
 		return method;
 	}
 
+	private static boolean notMatches(Class<?>[] paramType, Class<?>[] parameterTypes) {
+		return IntStream.range(0, parameterTypes.length).anyMatch(i -> !paramType[i].isAssignableFrom(parameterTypes[i]));
+	}
+
 	private String getClassType(Class<?>[] types) {
-		StringBuilder type = new StringBuilder();
-		for (int i = 0; i < types.length; i++) {
-			if (i > 0) {
-				type.append(", ");
-			}
-			type.append(getType(types[i]));
-		}
-		return type.toString();
+		return Arrays.stream(types).map(this::getType).collect(Collectors.joining(", "));
 	}
 
 	public List<String> getClassMethodSignature(Class<?> cls) {
-		List<String> list = new ArrayList<String>();
+		List<String> list = new ArrayList<>();
 		if (cls.isInterface()) {
 			Method[] methods = cls.getDeclaredMethods();
 			StringBuilder signatureMethod = new StringBuilder();

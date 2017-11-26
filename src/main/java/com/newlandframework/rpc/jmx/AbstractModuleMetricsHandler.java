@@ -22,14 +22,14 @@ import com.newlandframework.rpc.core.RpcSystemConfig;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public abstract class AbstractModuleMetricsHandler extends NotificationBroadcasterSupport implements ModuleMetricsVisitorMXBean {
-	protected List<ModuleMetricsVisitor> visitorList = new CopyOnWriteArrayList<ModuleMetricsVisitor>();
+	protected List<ModuleMetricsVisitor> visitorList = new CopyOnWriteArrayList<>();
 	protected static String startTime;
 	private final AtomicBoolean locked = new AtomicBoolean(false);
-	private final Queue<Thread> waiters = new ConcurrentLinkedQueue<Thread>();
+	private final Queue<Thread> waiters = new ConcurrentLinkedQueue<>();
 	private static final int METRICS_VISITOR_LIST_SIZE = HashModuleMetricsVisitor.getInstance().getHashModuleMetricsVisitorListSize();
 	private MetricsTask[] tasks = new MetricsTask[METRICS_VISITOR_LIST_SIZE];
 	private boolean aggregationTaskFlag = false;
@@ -64,7 +64,8 @@ public abstract class AbstractModuleMetricsHandler extends NotificationBroadcast
 				visitorList.clear();
 				latch.await();
 			} catch (InterruptedException e) {
-				log.error(e);
+				log.error(e.getMessage(), e);
+				Thread.currentThread().interrupt();
 			}
 		}
 		return visitorList;
@@ -84,7 +85,7 @@ public abstract class AbstractModuleMetricsHandler extends NotificationBroadcast
 		return new MBeanNotificationInfo[] { info };
 	}
 
-	public final static String getStartTime() {
+	public static final String getStartTime() {
 		if (startTime == null) {
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			startTime = format.format(new Date(ManagementFactory.getRuntimeMXBean().getStartTime()));
