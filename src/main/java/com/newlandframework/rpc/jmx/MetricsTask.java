@@ -2,12 +2,9 @@ package com.newlandframework.rpc.jmx;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
-
-import org.apache.commons.collections4.iterators.UniqueFilterIterator;
 
 import lombok.Data;
 import lombok.Getter;
@@ -143,15 +140,8 @@ public class MetricsTask implements Runnable {
 	}
 
 	private void accumulate() {
-		List<ModuleMetricsVisitor> list = visitorList;
-
-		Iterator iterator = new UniqueFilterIterator(list.iterator());
-		while (iterator.hasNext()) {
-			ModuleMetricsVisitor visitor = (ModuleMetricsVisitor) iterator.next();
-			result.add(new ModuleMetricsVisitor(visitor.getModuleName(), visitor.getMethodName()));
-		}
-
-		count(list);
+		visitorList.stream().distinct().map(v -> new ModuleMetricsVisitor(v.getModuleName(), v.getMethodName())).forEach(result::add);
+		count(visitorList);
 	}
 
 	private boolean equals(String srcModuleName, String destModuleName, String srcMethodName, String destMethodName) {
