@@ -47,7 +47,8 @@ public class AsyncInvoker {
 		}
 	}
 
-	private <R> R submit(final AsyncCallback<R> callback, Class<?> returnClass) {
+	@SuppressWarnings("unchecked")
+	private <R> R submit(AsyncCallback<R> callback, Class<?> returnClass) {
 		Future<R> future = submit0(() -> callback.call());
 
 		AsyncCallResult result = new AsyncCallResult(returnClass, future, RpcSystemConfig.SYSTEM_PROPERTY_ASYNC_MESSAGE_CALLBACK_TIMEOUT);
