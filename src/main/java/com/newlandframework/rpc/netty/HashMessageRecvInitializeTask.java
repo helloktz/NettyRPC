@@ -18,6 +18,7 @@ import com.newlandframework.rpc.model.MessageRequest;
 import com.newlandframework.rpc.model.MessageResponse;
 import com.newlandframework.rpc.parallel.HashCriticalSection;
 
+import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -39,20 +40,17 @@ public class HashMessageRecvInitializeTask extends AbstractMessageRecvInitialize
 			cls = ((ServiceFilterBinder) handlerMap.get(request.getClassName())).getObject().getClass();
 		}
 
+		@Cleanup("clear")
 		ReflectionUtils utils = new ReflectionUtils();
 
-		try {
-			Method method = ReflectionUtils.getDeclaredMethod(cls, request.getMethodName(), request.getTypeParameters());
-			utils.listMethod(method, false);
-			String signatureMethod = utils.getProvider().toString().trim();
+		Method method = ReflectionUtils.getDeclaredMethod(cls, request.getMethodName(), request.getTypeParameters());
+		utils.listMethod(method, false);
+		String signatureMethod = utils.getProvider().toString().trim();
 
-			int index = getHashVisitorListIndex(signatureMethod);
-			List<ModuleMetricsVisitor> metricsVisitor = HashModuleMetricsVisitor.getInstance().getHashVisitorList().get(index);
-			visitor.set(metricsVisitor.get(hashKey));
-			incrementInvoke(visitor.get());
-		} finally {
-			utils.clearProvider();
-		}
+		int index = getHashVisitorListIndex(signatureMethod);
+		List<ModuleMetricsVisitor> metricsVisitor = HashModuleMetricsVisitor.getInstance().getHashVisitorList().get(index);
+		visitor.set(metricsVisitor.get(hashKey));
+		incrementInvoke(visitor.get());
 	}
 
 	@Override
@@ -80,6 +78,7 @@ public class HashMessageRecvInitializeTask extends AbstractMessageRecvInitialize
 		criticalSection.exit(hashKey);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private int getHashVisitorListIndex(String signatureMethod) {
 		int index = 0;
 		int size = HashModuleMetricsVisitor.getInstance().getHashModuleMetricsVisitorListSize();
