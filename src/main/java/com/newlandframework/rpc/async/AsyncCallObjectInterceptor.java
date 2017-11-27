@@ -8,9 +8,9 @@ import net.sf.cglib.proxy.MethodProxy;
 
 public class AsyncCallObjectInterceptor implements MethodInterceptor {
 	private static final String NETTYRPCSTATUS = "_getStatus";
-	private Future future;
+	private Future<?> future;
 
-	public AsyncCallObjectInterceptor(Future future) {
+	public AsyncCallObjectInterceptor(Future<?> future) {
 		this.future = future;
 	}
 
