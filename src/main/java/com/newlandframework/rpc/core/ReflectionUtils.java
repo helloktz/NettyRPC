@@ -30,7 +30,7 @@ public class ReflectionUtils {
 	@Getter
 	private StringBuilder provider = new StringBuilder();
 
-	public void clearProvider() {
+	public void clear() {
 		provider.delete(0, provider.length());
 	}
 
@@ -129,7 +129,7 @@ public class ReflectionUtils {
 				return null;
 			}
 			constructor = constructors[0];
-			Class[] params = constructor.getParameterTypes();
+			Class<?>[] params = constructor.getParameterTypes();
 			args = new Object[params.length];
 			for (int i = 0; i < params.length; i++) {
 				args[i] = getDefaultVal(params[i]);
@@ -144,7 +144,7 @@ public class ReflectionUtils {
 		return null;
 	}
 
-	public static Object getDefaultVal(Class cl) {
+	public static Object getDefaultVal(Class<?> cl) {
 		if (cl.isArray()) {
 			return Array.newInstance(cl.getComponentType(), 0);
 		} else if (cl.isPrimitive() || builder.build().containsKey(cl)) {
