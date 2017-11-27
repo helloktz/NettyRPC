@@ -39,8 +39,7 @@
         <constructor-arg name="dataSource" ref="dataSource"/>
     </bean>
 
-    <bean id="sqlTxManager"
-          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <bean id="sqlTxManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource"/>
     </bean>
 
